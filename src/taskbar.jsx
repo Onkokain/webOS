@@ -6,6 +6,7 @@ const APPS = [
   { kind: 'notepad', label: 'Notepad', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" /><line x1="7" y1="7" x2="13" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><line x1="7" y1="10" x2="13" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><line x1="7" y1="13" x2="10" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
   { kind: 'camera', label: 'Camera', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><rect x="1" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" /><polyline points="15,8 19,6 19,14 15,12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="1.5" /></svg> },
   { kind: 'help', label: 'Help', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" /><path d="M7.5 7.5a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><circle cx="10" cy="15" r="0.75" fill="currentColor" /></svg> },
+  { kind: 'files', label: 'Files', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M2 5a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
 ];
 
 const glassStyle = {

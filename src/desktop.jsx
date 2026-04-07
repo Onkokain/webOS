@@ -55,7 +55,7 @@ export default function Desktop({ files = [], onDelete }) {
                     <line x1="7" y1="11" x2="15" y2="11" stroke="#555" strokeWidth="1" strokeLinecap="round" />
                     <line x1="7" y1="14" x2="15" y2="14" stroke="#555" strokeWidth="1" strokeLinecap="round" />
                   </svg>
-                  <button onClick={(e) => { e.stopPropagation(); onDelete(f.name); }}
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(f.path); }}
                     className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-gray-800 border border-gray-600 text-gray-500 hover:text-red-400 text-[8px] hidden group-hover:flex items-center justify-center">✕</button>
                 </div>
                 <span className="text-gray-600 font-mono text-[9px] text-center break-all">{f.name}</span>

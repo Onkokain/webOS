@@ -7,14 +7,29 @@ WINDOWS
   alt + enter    open terminal
   alt + n        open notepad
   alt + c        open camera
+  alt + h        open help
+  alt + f        open file manager
   alt + d        close focused window
   middle click   close window
 
 TERMINAL COMMANDS
-  help           list commands
-  echo <text>    print text
-  date           print current date/time
-  clear          clear terminal output
+  help               show all commands
+  echo <text>        print text
+  date               print date and time
+  whoami             print current user
+  hostname           print hostname
+  uname              print system info
+  uptime             print session uptime
+  pwd                print working directory
+  ls                 list terminal files
+  cat <file>         print file contents
+  rm <file>          delete a file
+  touch <file>       create empty file
+  history            show command history
+  cal                print current month calendar
+  env                print environment variables
+  banner <text>      print large ascii text
+  clear              clear terminal output
 
 NOTEPAD
   alt + s        save note to desktop
