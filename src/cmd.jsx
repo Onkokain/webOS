@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import Window from './window';
+import { fsDelete, fsNextName } from './fsUtils';
 
 const HOST = 'suprland';
 
@@ -63,13 +64,13 @@ const run = (cmd, user, cwd, setCwd, fs, setFs) => {
       if (!arg) return ['usage: mkdir <dir>'];
       const path = resolvePath(arg);
       if (fs[path]) return [`mkdir: ${arg}: already exists`];
-      setFs((p) => ({ ...p, [path]: { type: 'dir' } }));
+      setFs(p => ({ ...p, [path]: { type: 'dir' } }));
       return [];
     }
     case 'touch': {
       if (!arg) return ['usage: touch <file>'];
       const path = `${cwd}${arg}`;
-      setFs((p) => ({ ...p, [path]: p[path] ?? { type: 'file', text: '' } }));
+      setFs(p => ({ ...p, [path]: p[path] ?? { type: 'file', text: '' } }));
       return [];
     }
     case 'cat': {
@@ -83,7 +84,7 @@ const run = (cmd, user, cwd, setCwd, fs, setFs) => {
       if (!arg) return ['usage: rm <path>'];
       const path = arg.endsWith('/') ? resolvePath(arg) : `${cwd}${arg}`;
       if (!fs[path]) return [`rm: ${arg}: no such file or directory`];
-      setFs((p) => { const n = { ...p }; Object.keys(n).filter(k => k.startsWith(path)).forEach(k => delete n[k]); return n; });
+      setFs(p => fsDelete(p, path));
       return [];
     }
     case 'pwd': return [cwd.slice(0, -1)];
