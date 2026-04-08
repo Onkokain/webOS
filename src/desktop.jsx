@@ -8,7 +8,7 @@ const W = 72, H = 84;
 const autoPos = (i) => ({ x: 16 + Math.floor(i / 9) * (W + 20), y: 16 + (i % 9) * (H + 8) });
 
 const glassMenu = {
-  background: 'rgba(226, 35, 35, 0.92)', backdropFilter: 'blur(20px)',
+  background: 'rgba(18,18,18,0.92)', backdropFilter: 'blur(20px)',
   border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', minWidth: 140,
 };
 
