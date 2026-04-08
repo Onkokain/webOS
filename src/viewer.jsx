@@ -18,7 +18,7 @@ function Viewer({ file, onClose }) {
           {file.kind === 'video' && <video src={file.url} controls className="max-h-full max-w-full" />}
           {file.kind === 'audio' && <audio src={file.url} controls />}
           {!file.kind && (
-            <pre className="w-full h-full p-2 font-mono text-gray-300 text-xs whitespace-pre-wrap overflow-auto [&::-webkit-scrollbar]:hidden">
+            <pre className="w-full h-full p-2 font-mono text-gray-300 text-xs whitespace-pre-wrap overflow-auto hide-scroll">
               {file.text || <span className="text-gray-700">empty</span>}
             </pre>
           )}

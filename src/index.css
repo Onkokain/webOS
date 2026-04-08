@@ -1,9 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Saira+Stencil:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
-
 @theme {
-  --font-hacker: "Saira Stencil", "sans-serif";
- 
-  
+  --font-hacker: "Saira Stencil", "sans-serif"; 
+}
+
+@layer utilities {
+  .hide-scroll {
+    &::-webkit-scrollbar { display: none; }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

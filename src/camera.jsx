@@ -13,7 +13,6 @@ function AudioVisualizer({ stream }) {
     analyser.fftSize = 64;
     src.connect(analyser);
     const data = new Uint8Array(analyser.frequencyBinCount);
-
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw);
       const canvas = canvasRef.current;
@@ -22,18 +21,13 @@ function AudioVisualizer({ stream }) {
       const { width: w, height: h } = canvas;
       c.clearRect(0, 0, w, h);
       analyser.getByteFrequencyData(data);
-      const bars = 28;
-      const gap = 3;
-      const barW = (w - gap * (bars - 1)) / bars;
+      const bars = 28, gap = 3, barW = (w - gap * (bars - 1)) / bars;
       for (let i = 0; i < bars; i++) {
         const val = data[Math.floor(i * data.length / bars)] / 255;
         const barH = Math.max(3, val * h * 0.85);
-        const x = i * (barW + gap);
-        const y = (h - barH) / 2;
-        const alpha = 0.3 + val * 0.7;
-        c.fillStyle = `rgba(156,163,175,${alpha})`;
+        c.fillStyle = `rgba(156,163,175,${0.3 + val * 0.7})`;
         c.beginPath();
-        c.roundRect(x, y, barW, barH, 2);
+        c.roundRect(i * (barW + gap), (h - barH) / 2, barW, barH, 2);
         c.fill();
       }
     };
@@ -72,9 +66,9 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((s) => { streamRef.current = s; if (videoRef.current) videoRef.current.srcObject = s; })
+      .then(s => { streamRef.current = s; if (videoRef.current) videoRef.current.srcObject = s; })
       .catch(() => {});
-    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
+    return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
   const takePhoto = () => {
@@ -84,16 +78,14 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
     c.getContext('2d').drawImage(videoRef.current, 0, 0);
     setShutter(true);
     setTimeout(() => setShutter(false), 200);
-    c.toBlob((blob) => setPending({ blob, ext: 'png', label: 'photo' }), 'image/png');
+    c.toBlob(blob => setPending({ blob, ext: 'png', label: 'photo' }), 'image/png');
   };
 
   const startRec = (mimeType, ext, label) => {
-    const src = mimeType.includes('audio')
-      ? new MediaStream(streamRef.current.getAudioTracks())
-      : streamRef.current;
+    const src = mimeType.includes('audio') ? new MediaStream(streamRef.current.getAudioTracks()) : streamRef.current;
     chunksRef.current = [];
     const mr = new MediaRecorder(src, { mimeType });
-    mr.ondataavailable = (e) => chunksRef.current.push(e.data);
+    mr.ondataavailable = e => chunksRef.current.push(e.data);
     mr.onstop = () => setPending({ blob: new Blob(chunksRef.current, { type: mimeType }), ext, label });
     mr.start();
     recorderRef.current = mr;
@@ -115,8 +107,7 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
   };
 
   const save = () => {
-    const url = URL.createObjectURL(pending.blob);
-    onSave(`${pending.label}-${Date.now()}.${pending.ext}`, { url, kind: pending.label });
+    onSave(`${pending.label}-${Date.now()}.${pending.ext}`, { url: URL.createObjectURL(pending.blob), kind: pending.label });
     setPending(null);
   };
 
@@ -125,19 +116,12 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
       <div className="flex-1 min-h-0 flex items-center justify-center bg-black overflow-hidden relative">
         {mode === 'audio' ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 px-6">
-            <div className="w-full" style={{ height: 80 }}>
-              <AudioVisualizer stream={streamRef.current} />
-            </div>
-            {recording && (
-              <span className="font-mono text-[10px] text-gray-500 tracking-widest">
-                {paused ? 'PAUSED' : 'RECORDING'}
-              </span>
-            )}
+            <div className="w-full" style={{ height: 80 }}><AudioVisualizer stream={streamRef.current} /></div>
+            {recording && <span className="font-mono text-[10px] text-gray-500 tracking-widest">{paused ? 'PAUSED' : 'RECORDING'}</span>}
           </div>
         ) : (
           <>
-            <video ref={videoRef} autoPlay playsInline muted
-              className="max-h-full max-w-full object-contain" style={{ transform: 'scaleX(-1)' }} />
+            <video ref={videoRef} autoPlay playsInline muted className="max-h-full max-w-full object-contain" style={{ transform: 'scaleX(-1)' }} />
             {recording && (
               <span className="absolute top-2 right-2 flex items-center gap-1.5 font-mono text-[10px] text-red-400">
                 <span className={`w-1.5 h-1.5 rounded-full bg-red-500 ${!paused && 'animate-pulse'}`} />
@@ -151,7 +135,7 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
 
       <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800">
         <div className="flex gap-1">
-          {['photo', 'video', 'audio'].map((m) => (
+          {['photo', 'video', 'audio'].map(m => (
             <button key={m} onClick={() => !recording && setMode(m)}
               className={`font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-lg transition-colors ${mode === m ? 'bg-gray-700 text-gray-200' : 'text-gray-600 hover:text-gray-400'}`}>
               {m}
@@ -160,13 +144,11 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
         </div>
         <div className="flex items-center gap-2">
           {recording && (
-            <button onClick={togglePause}
-              className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 transition-colors">
+            <button onClick={togglePause} className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 transition-colors">
               {paused ? 'resume' : 'pause'}
             </button>
           )}
-          <button onClick={action}
-            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-colors ${recording ? 'border-red-500 bg-red-500/20' : 'border-gray-500 bg-gray-800 hover:bg-gray-700'}`}>
+          <button onClick={action} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-colors ${recording ? 'border-red-500 bg-red-500/20' : 'border-gray-500 bg-gray-800 hover:bg-gray-700'}`}>
             {mode === 'photo' ? <span className="w-4 h-4 rounded-full bg-gray-300" />
               : recording ? <span className="w-3 h-3 rounded-sm bg-red-400" />
               : <span className="w-3 h-3 rounded-full bg-gray-400" />}

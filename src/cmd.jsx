@@ -180,7 +180,7 @@ export default function Cli({ id, focused, onFocus, onClose, user, fs, setFs }) 
 
   return (
     <Window id={id} title={`${user}@${HOST}`} focused={focused} onFocus={onFocus} onClose={onClose}>
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll"
         style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} onClick={() => inputRef.current?.focus()}>
         {history.map((l, i) => (
           <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : 'text-gray-300'}>{l.t}</div>

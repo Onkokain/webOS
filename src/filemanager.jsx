@@ -45,7 +45,7 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
             <span className="font-mono text-gray-700 text-xs tracking-widest">empty</span>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex-1 min-h-0 overflow-y-auto hide-scroll">
             <table className="w-full font-mono text-xs border-collapse">
               <thead>
                 <tr className="text-gray-700 border-b border-gray-800 select-none">
