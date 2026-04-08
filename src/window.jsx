@@ -5,8 +5,8 @@ export default function Window({ id, title, focused, onFocus, onClose, children 
       className={`flex h-full w-full flex-col overflow-hidden border-2 rounded-3xl bg-[#0a0a0f] transition-colors duration-200 relative ${focused ? 'border-cyan-400' : 'border-gray-600'}`}
       style={{ backdropFilter: 'blur(10px)', containerType: 'size' }}
     >
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#111] select-none">
-        <div className="flex gap-1.5">
+      <div className="flex-shrink-0 row justify-between px-3 py-2 bg-[#111] select-none">
+        <div className="row gap-1.5">
           <button onClick={(e) => { e.stopPropagation(); onClose(id); }} className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors" type="button" />
           <span className="h-3 w-3 rounded-full bg-yellow-400" />
           <span className="h-3 w-3 rounded-full bg-green-500" />

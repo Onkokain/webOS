@@ -187,7 +187,7 @@ export default function Cli({ id, focused, onFocus, onClose, user, fs, setFs }) 
         ))}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={submit} className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-t border-gray-800">
+      <form onSubmit={submit} className="flex-shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
         <span className="font-mono whitespace-nowrap" style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }}>
           <span className="text-cyan-500">{user}</span>
           <span className="text-gray-600">@</span>

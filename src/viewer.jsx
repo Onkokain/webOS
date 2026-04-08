@@ -9,7 +9,7 @@ function Viewer({ file, onClose }) {
       <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
         onClick={e => e.stopPropagation()}
         className="flex flex-col w-[500px] max-w-[90vw] max-h-[75vh] rounded-2xl overflow-hidden border border-gray-700 bg-[#0e0e0e]">
-        <div className="flex items-center justify-between px-4 py-2.5 bg-[#111] border-b border-gray-800 select-none">
+        <div className="row justify-between px-4 py-2.5 bg-[#111] border-b border-gray-800 select-none">
           <span className="font-mono text-gray-400 text-xs truncate">{file.name}</span>
           <button onClick={onClose} className="text-gray-600 hover:text-gray-300 text-xs ml-2">✕</button>
         </div>

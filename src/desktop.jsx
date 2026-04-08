@@ -176,7 +176,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
       onMouseDown={onBgMouseDown}
       onContextMenu={e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' }); }}>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-4">
+      <div className="absolute inset-0 col center pointer-events-none gap-4">
         <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
           <polygon points="26,4 48,14 48,38 26,48 4,38 4,14" stroke="#2a2a2a" strokeWidth="1.5" fill="none" />
           <polygon points="26,12 40,19 40,33 26,40 12,33 12,19" stroke="#333" strokeWidth="1" fill="none" />
@@ -188,7 +188,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
       {entries.map(entry => {
         const sel = selected.has(entry.path);
         return (
-          <div key={entry.path} className="absolute flex flex-col items-center gap-1 cursor-pointer"
+          <div key={entry.path} className="absolute col items-center gap-1 cursor-pointer"
             style={{ left: entry.x, top: entry.y, width: W, height: H, zIndex: sel ? 20 : 10 }}
             onMouseDown={e => onIconMouseDown(e, entry.path)}
             onDoubleClick={() => openEntry(entry)}
@@ -216,7 +216,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
             { label: 'Cut', fn: () => doCut(selected) },
             { label: 'Delete', fn: () => { deleteSelected(); setMenu(null); }, danger: true },
           ].filter(i => !i.hide).map(({ label, fn, danger }) => (
-            <button key={label} onClick={fn} className={`px-4 py-2 font-mono text-xs text-left transition-colors hover:bg-white/5 ${danger ? 'text-red-400' : 'text-gray-400 hover:text-gray-200'}`}>{label}</button>
+            <button key={label} onClick={fn} className={`px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 ${danger ? 'text-red-400' : 'text-gray-400 hover:text-gray-200'}`}>{label}</button>
           ))}
         </div>
       )}

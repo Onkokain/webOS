@@ -40,12 +40,12 @@ function AudioVisualizer({ stream }) {
 
 function SavePrompt({ label, onSave, onDiscard }) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
-      <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-gray-700 bg-[#111]">
-        <p className="text-gray-300 font-mono text-xs tracking-wider">Save {label}?</p>
-        <div className="flex gap-3">
-          <button onClick={onSave} className="px-4 py-1.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-200 font-mono text-xs transition-colors">Save</button>
-          <button onClick={onDiscard} className="px-4 py-1.5 rounded-xl border border-gray-700 hover:bg-gray-800 text-gray-500 font-mono text-xs transition-colors">Discard</button>
+    <div className="absolute inset-0 z-10 center" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+      <div className="col items-center gap-3 px-6 py-5 rounded-2xl border border-gray-700 bg-[#111]">
+        <p className="text-gray-300 mono-xs tracking-wider">Save {label}?</p>
+        <div className="row gap-3">
+          <button onClick={onSave} className="prompt-btn bg-gray-700 hover:bg-gray-600 text-gray-200">Save</button>
+          <button onClick={onDiscard} className="prompt-btn border border-gray-700 hover:bg-gray-800 text-gray-500">Discard</button>
         </div>
       </div>
     </div>
@@ -113,9 +113,9 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
 
   return (
     <Window id={id} title="camera" focused={focused} onFocus={onFocus} onClose={onClose}>
-      <div className="flex-1 min-h-0 flex items-center justify-center bg-black overflow-hidden relative">
+      <div className="flex-1 min-h-0 center bg-black overflow-hidden relative">
         {mode === 'audio' ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 px-6">
+          <div className="w-full h-full col center gap-4 px-6">
             <div className="w-full" style={{ height: 80 }}><AudioVisualizer stream={streamRef.current} /></div>
             {recording && <span className="font-mono text-[10px] text-gray-500 tracking-widest">{paused ? 'PAUSED' : 'RECORDING'}</span>}
           </div>
@@ -123,7 +123,7 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
           <>
             <video ref={videoRef} autoPlay playsInline muted className="max-h-full max-w-full object-contain" style={{ transform: 'scaleX(-1)' }} />
             {recording && (
-              <span className="absolute top-2 right-2 flex items-center gap-1.5 font-mono text-[10px] text-red-400">
+              <span className="absolute top-2 right-2 row gap-1.5 font-mono text-[10px] text-red-400">
                 <span className={`w-1.5 h-1.5 rounded-full bg-red-500 ${!paused && 'animate-pulse'}`} />
                 {paused ? 'PAUSED' : 'REC'}
               </span>
@@ -133,22 +133,22 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
         {shutter && <div className="absolute inset-0 bg-white pointer-events-none" style={{ opacity: 0.85, transition: 'opacity 0.2s' }} />}
       </div>
 
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800">
-        <div className="flex gap-1">
+      <div className="cam-bar">
+        <div className="row gap-1">
           {['photo', 'video', 'audio'].map(m => (
             <button key={m} onClick={() => !recording && setMode(m)}
-              className={`font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-lg transition-colors ${mode === m ? 'bg-gray-700 text-gray-200' : 'text-gray-600 hover:text-gray-400'}`}>
+              className={`mono-tag px-3 py-1 rounded-lg transition-colors ${mode === m ? 'bg-gray-700 text-gray-200' : 'text-gray-600 hover:text-gray-400'}`}>
               {m}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="row gap-2">
           {recording && (
-            <button onClick={togglePause} className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 transition-colors">
+            <button onClick={togglePause} className="mono-tag px-3 py-1 rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 transition-colors">
               {paused ? 'resume' : 'pause'}
             </button>
           )}
-          <button onClick={action} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-colors ${recording ? 'border-red-500 bg-red-500/20' : 'border-gray-500 bg-gray-800 hover:bg-gray-700'}`}>
+          <button onClick={action} className={`w-9 h-9 rounded-full border-2 center transition-colors ${recording ? 'border-red-500 bg-red-500/20' : 'border-gray-500 bg-gray-800 hover:bg-gray-700'}`}>
             {mode === 'photo' ? <span className="w-4 h-4 rounded-full bg-gray-300" />
               : recording ? <span className="w-3 h-3 rounded-sm bg-red-400" />
               : <span className="w-3 h-3 rounded-full bg-gray-400" />}

@@ -35,14 +35,14 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
     <Window id={id} title="files" focused={focused} onFocus={onFocus} onClose={onClose}>
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
         onContextMenu={e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}>
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-800 select-none">
+        <div className="row gap-2 px-3 py-1.5 border-b border-gray-800 select-none">
           <button onClick={goUp} disabled={cwd === root} className="text-gray-600 hover:text-gray-300 disabled:opacity-20 font-mono text-xs transition-colors">←</button>
           <span className="font-mono text-gray-600 text-[10px] truncate">{cwd}</span>
         </div>
 
         {entries.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <span className="font-mono text-gray-700 text-xs tracking-widest">empty</span>
+          <div className="flex-1 center">
+            <span className="mono-xs text-gray-700 tracking-widest">empty</span>
           </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto hide-scroll">
