@@ -19,7 +19,7 @@
   .mono-xs  { @apply font-mono text-xs; }
   .mono-tag { @apply font-mono text-[9px] uppercase tracking-widest; }
 
-  .menu-btn   { @apply row gap-2.5 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-white/5 mono-xs transition-colors text-left; }
-  .prompt-btn { @apply px-4 py-1.5 rounded-xl mono-xs transition-colors; }
-  .cam-bar    { @apply flex-shrink-0 row justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800; }
+  .menu-btn   { @apply flex items-center gap-2.5 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-white/5 font-mono text-xs transition-colors text-left; }
+  .prompt-btn { @apply px-4 py-1.5 rounded-xl font-mono text-xs transition-colors; }
+  .cam-bar    { @apply flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800; }
 }
