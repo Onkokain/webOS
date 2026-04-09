@@ -209,7 +209,69 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
         if (out[0]==='__CLEAR__') {
             setHistory([]);
         }
-    }
+        else if (out[0]==='__HISTORY__') {
+            setHistory((h) => [...h,
+                {k: 'prompt', 
+                 t: `${user}@${HOST}:${shortCwd}$ ${cmd}`
+                },
+                ...cmdHistory.map((c,i) => ({k : 'out', t: ` ${cmdHistory.length-i} ${c}`}))
+            ]);
+        }
+        else {
+            setHistory((h) => [...h,
+                {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`},
+                ...out.map((t) => ({k: 'out', t})),
+            ]);
+        }
+
+        setCmdHistory((h) => [cmd,...h]);
+        setHistIdx(-1);
+        setInput('');
+        scrollBottom();
+    };
+
+    const onKeyDown=(e) => {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const i= Math.min(histIdx+1,cmdHistory.length-1);
+            setHistIdx(i);
+            setInput(cmdHistory[i] ?? '');
+        }
+        else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const i=Math.max(histIdx-1,-1);
+            setHistIdx(i);
+            setInput(i===-1 ? '' : cmdHistory[i]);
+        }
+    };
+
+    return (
+        <>
+            <Window id={id} title={`${user}@${HOST}`} focused={focused} onFocus={onFocus} onClose={onClose}>
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll"
+                style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} onClick={() => inputRef.current?.focus()}>
+                {history.map((l, i) => (
+                <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : 'text-gray-300'}>{l.t}</div>
+                ))}
+                <div ref={bottomRef} />
+            </div>
+            <form onSubmit={submit} className="flex-shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
+                <span className="font-mono whitespace-nowrap" style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }}>
+                <span className="text-cyan-500">{user}</span>
+                <span className="text-gray-600">@</span>
+                <span className="text-purple-400">{HOST}</span>
+                <span className="text-gray-500">:{shortCwd}$</span>
+                </span>
+                <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
+                value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={onKeyDown}
+                className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0"
+                style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} spellCheck="false" autoComplete="off" />
+            </form>
+            </Window>
+        
+        
+        </>
+    )
 
 
 }
