@@ -1,162 +1,204 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Window from './window';
+import { fsDelete, fsNextName } from './fsUtils';
 
-function AudioVisualizer({ stream }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
+const HOST = 'suprland';
 
-  useEffect(() => {
-    if (!stream) return;
-    const ctx = new AudioContext();
-    const src = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 64;
-    src.connect(analyser);
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    const draw = () => {
-      rafRef.current = requestAnimationFrame(draw);
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const c = canvas.getContext('2d');
-      const { width: w, height: h } = canvas;
-      c.clearRect(0, 0, w, h);
-      analyser.getByteFrequencyData(data);
-      const bars = 28, gap = 3, barW = (w - gap * (bars - 1)) / bars;
-      for (let i = 0; i < bars; i++) {
-        const val = data[Math.floor(i * data.length / bars)] / 255;
-        const barH = Math.max(3, val * h * 0.85);
-        c.fillStyle = `rgba(156,163,175,${0.3 + val * 0.7})`;
-        c.beginPath();
-        c.roundRect(i * (barW + gap), (h - barH) / 2, barW, barH, 2);
-        c.fill();
+const run = (cmd, user, cwd, setCwd, fs, setFs) => {
+  const root = `/home/${user}/`;
+  const [base, ...rest] = cmd.trim().split(/\s+/);
+  const arg = rest.join(' ');
+
+  const resolvePath = (p) => {
+    if (!p || p === '~') return root;
+    if (p.startsWith('/')) return p.endsWith('/') ? p : p + '/';
+    const parts = [...cwd.split('/').filter(Boolean), ...p.split('/').filter(Boolean)];
+    const resolved = [];
+    for (const part of parts) {
+      if (part === '..') resolved.pop();
+      else resolved.push(part);
+    }
+    return '/' + resolved.join('/') + '/';
+  };
+
+  switch (base.toLowerCase()) {
+    case 'help': return [
+      'available commands:',
+      '  help               :   show this message',
+      '  echo <text>        :   print text',
+      '  date               :   print date and time',
+      '  whoami             :   print current user',
+      '  hostname           :   print hostname',
+      '  uname              :   print system info',
+      '  uptime             :   print session uptime',
+      '  pwd                :   print working directory',
+      '  cd <dir>           :   change directory',
+      '  ls [dir]           :   list directory contents',
+      '  mkdir <dir>        :   create a directory',
+      '  touch <file>       :   create empty file',
+      '  cat <file>         :   print file contents',
+      '  rm <path>          :   delete file or directory',
+      '  history            :   show command history',
+      '  cal                :   print current month calendar',
+      '  env                :   print environment variables',
+      '  banner <text>      :   print large ascii text',
+      '  clear              :   clear terminal',
+    ];
+    case 'cd': {
+      const target = resolvePath(arg);
+      if (!target.startsWith(root)) return [`cd: permission denied: cannot go above /home/${user}`];
+      if (target !== root && !fs[target]) return [`cd: ${arg}: no such directory`];
+      setCwd(target);
+      return [];
+    }
+    case 'ls': {
+      const dir = arg ? resolvePath(arg) : cwd;
+      const entries = Object.keys(fs).filter((k) => {
+        if (k === dir) return false;
+        const rel = k.slice(dir.length);
+        return k.startsWith(dir) && rel.split('/').filter(Boolean).length === 1;
+      });
+      return entries.length ? entries.map((k) => k.slice(dir.length).replace(/\/$/, '') + (fs[k].type === 'dir' ? '/' : '')) : ['(empty)'];
+    }
+    case 'mkdir': {
+      if (!arg) return ['usage: mkdir <dir>'];
+      const path = resolvePath(arg);
+      if (fs[path]) return [`mkdir: ${arg}: already exists`];
+      setFs(p => ({ ...p, [path]: { type: 'dir' } }));
+      return [];
+    }
+    case 'touch': {
+      if (!arg) return ['usage: touch <file>'];
+      const path = `${cwd}${arg}`;
+      setFs(p => ({ ...p, [path]: p[path] ?? { type: 'file', text: '' } }));
+      return [];
+    }
+    case 'cat': {
+      if (!arg) return ['usage: cat <file>'];
+      const path = `${cwd}${arg}`;
+      if (!fs[path]) return [`cat: ${arg}: no such file`];
+      if (fs[path].type === 'dir') return [`cat: ${arg}: is a directory`];
+      return (fs[path].text || '').split('\n');
+    }
+    case 'rm': {
+      if (!arg) return ['usage: rm <path>'];
+      const path = arg.endsWith('/') ? resolvePath(arg) : `${cwd}${arg}`;
+      if (!fs[path]) return [`rm: ${arg}: no such file or directory`];
+      setFs(p => fsDelete(p, path));
+      return [];
+    }
+    case 'pwd': return [cwd.slice(0, -1)];
+    case 'echo': return [arg || ''];
+    case 'date': return [new Date().toString()];
+    case 'whoami': return [user];
+    case 'hostname': return [HOST];
+    case 'uname': return ['Suprland* 1.0.0 (web-os) x86_64 GNU/Linux'];
+    case 'uptime': return [`up ${Math.floor(performance.now() / 60000)} min,  1 user,  load average: 0.00, 0.00, 0.00`];
+    case 'history': return ['__HISTORY__'];
+    case 'cal': {
+      const now = new Date();
+      const y = now.getFullYear(), m = now.getMonth();
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const first = new Date(y, m, 1).getDay();
+      const days = new Date(y, m + 1, 0).getDate();
+      const lines = [`   ${months[m]} ${y}`, 'Su Mo Tu We Th Fr Sa'];
+      let row = '   '.repeat(first);
+      for (let d = 1; d <= days; d++) {
+        row += String(d).padStart(2) + ' ';
+        if ((first + d) % 7 === 0) { lines.push(row.trimEnd()); row = ''; }
       }
-    };
-    draw();
-    return () => { cancelAnimationFrame(rafRef.current); ctx.close(); };
-  }, [stream]);
+      if (row.trim()) lines.push(row.trimEnd());
+      return lines;
+    }
+    case 'env': return [
+      `USER=${user}`, `HOME=/home/${user}`, `HOSTNAME=${HOST}`,
+      `SHELL=/bin/suprsh`, `TERM=xterm-256color`, `OS=Suprland* 1.0.0`, `PWD=${cwd}`,
+    ];
+    case 'banner': {
+      if (!arg) return ['usage: banner <text>'];
+      const map = { A:'#\n#\n###\n#  #\n#  #',B:'##\n# #\n##\n# #\n##',C:'###\n#\n#\n#\n###',D:'##\n# #\n# #\n# #\n##',E:'###\n#\n##\n#\n###',F:'###\n#\n##\n#\n#',G:'###\n#\n# ##\n#  #\n###',H:'# #\n# #\n###\n# #\n# #',I:'###\n #\n #\n #\n###',L:'#\n#\n#\n#\n###',N:'# #\n## #\n# ##\n#  #\n#  #',O:'###\n# #\n# #\n# #\n###',P:'##\n# #\n##\n#\n#',R:'##\n# #\n##\n# #\n#  #',S:'###\n#\n###\n  #\n###',T:'###\n #\n #\n #\n #',U:'# #\n# #\n# #\n# #\n###',W:'# #\n# #\n# #\n###\n # ',X:'# #\n # \n # \n # \n# #',Y:'# #\n # \n # \n # \n # ',Z:'###\n  #\n #\n#\n###' };
+      const chars = arg.toUpperCase().split('').filter(c => map[c]);
+      if (!chars.length) return [arg];
+      const rows = chars.map(c => map[c].split('\n'));
+      const h = Math.max(...rows.map(r => r.length));
+      const out = [];
+      for (let i = 0; i < h; i++) out.push(rows.map(r => (r[i] || '').padEnd(4)).join(' '));
+      return out;
+    }
+    case 'clear': return ['__CLEAR__'];
+    default: return [`${base}: command not found`];
+  }
+};
 
-  return <canvas ref={canvasRef} className="w-full h-full" />;
-}
+const BOOT = (user) => [
+  { k: 'dim', t: `Suprland* 1.0.0 — welcome, ${user}` },
+  { k: 'dim', t: 'type help for available commands' },
+  { k: 'dim', t: '─'.repeat(36) },
+];
 
-function SavePrompt({ label, onSave, onDiscard }) {
-  return (
-    <div className="absolute inset-0 z-10 center" >
-      <div className="col items-center gap-3 px-6 py-5 rounded-2xl border border-gray-700 bg-[#111]">
-        <p className="text-gray-300 mono-xs tracking-wider">Save {label}?</p>
-        <div className="row gap-3">
-          <button onClick={onSave} className="prompt-btn bg-gray-700 hover:bg-gray-600 text-gray-200">Save</button>
+export default function Cli({ id, focused, onFocus, onClose, user, fs, setFs }) {
+  const root = `/home/${user}/`;
+  const [input, setInput] = useState('');
+  const [history, setHistory] = useState(BOOT(user));
+  const [cmdHistory, setCmdHistory] = useState([]);
+  const [histIdx, setHistIdx] = useState(-1);
+  const [cwd, setCwd] = useState('/home/');
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
-          <button onClick={onDiscard} className="prompt-btn border border-gray-700 hover:bg-gray-800 text-gray-500">Discard</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+  const shortCwd = cwd === root ? '~' : cwd === '/home/' ? '/home' : '~/' + cwd.slice(root.length).replace(/\/$/, '');
+  const scrollBottom = () => setTimeout(() => bottomRef.current?.scrollIntoView(), 0);
 
-export default function Camera({ id, focused, onFocus, onClose, onSave }) {
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const recorderRef = useRef(null);
-  const chunksRef = useRef([]);
-
-  const [mode, setMode] = useState('photo');
-  const [recording, setRecording] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [pending, setPending] = useState(null);
-  const [shutter, setShutter] = useState(false);
-
-  useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(s => { streamRef.current = s; if (videoRef.current) videoRef.current.srcObject = s; })
-      .catch(() => {});
-    return () => {streamRef.current?.getTracks().forEach(t =>      t.stop());};
-  }, []);
-
-  const takePhoto = () => {
-    const c = document.createElement('canvas');
-    c.width = videoRef.current.videoWidth;
-    c.height = videoRef.current.videoHeight;
-    c.getContext('2d').drawImage(videoRef.current, 0, 0);
-    setShutter(true);
-    setTimeout(() => setShutter(false), 200);
-    c.toBlob(blob => setPending({ blob, ext: 'png', label: 'photo' }), 'image/png');
+  const submit = (e) => {
+    e.preventDefault();
+    const cmd = input.trim();
+    if (!cmd) return;
+    const out = run(cmd, user, cwd, setCwd, fs, setFs);
+    if (out[0] === '__CLEAR__') {
+      setHistory([]);
+    } else if (out[0] === '__HISTORY__') {
+      setHistory((h) => [...h,
+        { k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}` },
+        ...cmdHistory.map((c, i) => ({ k: 'out', t: `  ${cmdHistory.length - i}  ${c}` })),
+      ]);
+    } else {
+      setHistory((h) => [...h,
+        { k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}` },
+        ...out.map((t) => ({ k: 'out', t })),
+      ]);
+    }
+    setCmdHistory((h) => [cmd, ...h]);
+    setHistIdx(-1);
+    setInput('');
+    scrollBottom();
   };
 
-  const startRec = (mimeType, ext, label) => {
-    const src = mimeType.includes('audio') ? new MediaStream(streamRef.current.getAudioTracks()) : streamRef.current;
-    chunksRef.current = [];
-    const mr = new MediaRecorder(src, { mimeType });
-    mr.ondataavailable = e => chunksRef.current.push(e.data);
-    mr.onstop = () => setPending({ blob: new Blob(chunksRef.current, { type: mimeType }), ext, label });
-    mr.start();
-    recorderRef.current = mr;
-    setRecording(true);
-    setPaused(false);
-  };
-
-  const togglePause = () => {
-    if (!recorderRef.current) return;
-    if (paused) { recorderRef.current.resume(); setPaused(false); }
-    else { recorderRef.current.pause(); setPaused(true); }
-  };
-
-  const action = () => {
-    if (mode === 'photo') return takePhoto();
-    if (recording) { recorderRef.current?.stop(); setRecording(false); setPaused(false); return; }
-    if (mode === 'video') startRec('video/webm', 'webm', 'video');
-    if (mode === 'audio') startRec('audio/webm', 'webm', 'audio');
-  };
-
-  const save = () => {
-    onSave(`${pending.label}-${Date.now()}.${pending.ext}`, { url: URL.createObjectURL(pending.blob), kind: pending.label });
-    setPending(null);
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowUp') { e.preventDefault(); const i = Math.min(histIdx + 1, cmdHistory.length - 1); setHistIdx(i); setInput(cmdHistory[i] ?? ''); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); const i = Math.max(histIdx - 1, -1); setHistIdx(i); setInput(i === -1 ? '' : cmdHistory[i]); }
   };
 
   return (
-    <Window id={id} title="camera" focused={focused} onFocus={onFocus} onClose={onClose}>
-      <div className="flex-1 min-h-0 center bg-black overflow-hidden relative">
-        {mode === 'audio' ? (
-          <div className="w-full h-full col center gap-4 px-6">
-            <div className="w-full" style={{ height: 80 }}><AudioVisualizer stream={streamRef.current} /></div>
-            {recording && <span className="font-mono text-[10px] text-gray-500 tracking-widest">{paused ? 'PAUSED' : 'RECORDING'}</span>}
-          </div>
-        ) : (
-          <>
-            <video ref={videoRef} autoPlay playsInline muted className="max-h-full max-w-full object-contain" style={{ transform: 'scaleX(-1)' }} />
-            {recording && (
-              <span className="absolute top-2 right-2 row gap-1.5 font-mono text-[10px] text-red-400">
-                <span className={`w-1.5 h-1.5 rounded-full bg-red-500 ${!paused && 'animate-pulse'}`} />
-                {paused ? 'PAUSED' : 'REC'}
-              </span>
-            )}
-          </>
-        )}
-        {shutter && <div className="absolute inset-0 bg-white pointer-events-none" style={{ opacity: 0.85, transition: 'opacity 0.2s' }} />}
+    <Window id={id} title={`${user}@${HOST}`} focused={focused} onFocus={onFocus} onClose={onClose}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll"
+        style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} onClick={() => inputRef.current?.focus()}>
+        {history.map((l, i) => (
+          <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : 'text-gray-300'}>{l.t}</div>
+        ))}
+        <div ref={bottomRef} />
       </div>
-
-      <div className="cam-bar">
-        <div className="row gap-1">
-          {['photo', 'video', 'audio'].map(m => (
-            <button key={m} onClick={() => !recording && setMode(m)}
-              className={`mono-tag px-3 py-1 rounded-lg transition-colors ${mode === m ? 'bg-gray-700 text-gray-200' : 'text-gray-600 hover:text-gray-400'}`}>
-              {m}
-            </button>
-          ))}
-        </div>
-        <div className="row gap-2">
-          {recording && (
-            <button onClick={togglePause} className="mono-tag px-3 py-1 rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 transition-colors">
-              {paused ? 'resume' : 'pause'}
-            </button>
-          )}
-          <button onClick={action} className={`w-9 h-9 rounded-full border-2 center transition-colors ${recording ? 'border-red-500 bg-red-500/20' : 'border-gray-500 bg-gray-800 hover:bg-gray-700'}`}>
-            {mode === 'photo' ? <span className="w-4 h-4 rounded-full bg-gray-300" />
-              : recording ? <span className="w-3 h-3 rounded-sm bg-red-400" />
-              : <span className="w-3 h-3 rounded-full bg-gray-400" />}
-          </button>
-        </div>
-      </div>
-      {pending && <SavePrompt label={pending.label} onSave={save} onDiscard={() => setPending(null)} />}
+      <form onSubmit={submit} className="flex-shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
+        <span className="font-mono whitespace-nowrap" style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }}>
+          <span className="text-cyan-500">{user}</span>
+          <span className="text-gray-600">@</span>
+          <span className="text-purple-400">{HOST}</span>
+          <span className="text-gray-500">:{shortCwd}$</span>
+        </span>
+        <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
+          value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={onKeyDown}
+          className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0"
+          style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} spellCheck="false" autoComplete="off" />
+      </form>
     </Window>
   );
 }
