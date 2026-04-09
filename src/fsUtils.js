@@ -22,7 +22,8 @@ export function fsCopy(fs, srcPath, destPath) {
 }
 
 export function fsNextName(fs, dir, prefix, ext = '') {
-  let n = 1;
-  while (fs[`${dir}${prefix}${n}${ext}`] || fs[`${dir}${prefix}${n}${ext}/`]) n++;
-  return `${dir}${prefix}${n}${ext}`;
+  if (!fs[`${dir}${prefix}${ext}`] && !fs[`${dir}${prefix}${ext}/`]) return `${dir}${prefix}${ext}`;
+  let n = 2;
+  while (fs[`${dir}${prefix} (${n})${ext}`] || fs[`${dir}${prefix} (${n})${ext}/`]) n++;
+  return `${dir}${prefix} (${n})${ext}`;
 }

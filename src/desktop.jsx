@@ -147,7 +147,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
       });
       return n;
     });
-    if (clipboard.op === 'cut') setClipboard(null);
+    setClipboard(null);
     setMenu(null);
   };
 
