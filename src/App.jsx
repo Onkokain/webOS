@@ -14,7 +14,7 @@ import Settings from './apps/settings';
 
 const TOTAL_WINDOWS = 8;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
-const SINGLE_WINDOW = ['camera', 'help', 'files', 'browser', 'settings'];
+const SINGLE_WINDOW = ['camera', 'help', 'settings'];
 
 function swapIds(node, idA, idB) {
   if (!node) return null;
@@ -37,8 +37,11 @@ export default function App() {
   const [fmPath, setFmPath] = useState(null);
   const [floating, setFloating] = useState([]);
   const [registry, setRegistry] = useState({});
-  const [settings, setSettings] = useState({ wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: true });
-  const [trash, setTrash] = useState([]);
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('suprland-settings');
+    return saved ? JSON.parse(saved) : { wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: false };
+  });
+  const [browserUrl, setBrowserUrl] = useState(null);
   const idRef = useRef(1);
   const [dragOverId, setDragOverId] = useState(null);
   const [dragPos, setDragPos] = useState(null);
@@ -195,6 +198,10 @@ export default function App() {
   };
 
   useEffect(() => {
+    localStorage.setItem('suprland-settings', JSON.stringify(settings));
+  }, [settings]);
+
+  useEffect(() => {
     const handler = (e) => {
       if (!e.altKey) return;
       const k = e.key.toLowerCase();
@@ -217,6 +224,14 @@ export default function App() {
   const allKinds = [...tiledWindows.map(w => w.kind), ...floating.map(f => f.kind)];
   const allIds = Object.keys(registry).map(Number);
 
+  // Adjust bounds for content area when taskbar is visible
+  const contentBounds = {
+    x: 0,
+    y: 0, 
+    w: 100,
+    h: 100
+  };
+
   const winProps = (id, focused) => ({
     id, focused,
     onFocus: setActiveId,
@@ -232,12 +247,10 @@ export default function App() {
     if (kind === 'camera') return <Camera {...p} />;
     if (kind === 'help') return <Help {...p} />;
     if (kind === 'files') return <FileManager {...p} initialPath={fmPath} />;
-    if (kind === 'browser') return <Browser {...p} />;
-    if (kind === 'settings') return <Settings {...p} settings={settings} onSettings={setSettings} trash={trash}
-        onRestoreTrash={i => { const item = trash[i]; setFs(prev => ({ ...prev, [item.path]: item.data })); setTrash(prev => prev.filter((_, j) => j !== i)); }}
-        onEmptyTrash={() => setTrash([])}
+    if (kind === 'browser') return <Browser {...p} initialUrl={browserUrl} />;
+    if (kind === 'settings') return <Settings {...p} settings={settings} onSettings={setSettings} 
         onResetUser={() => { localStorage.removeItem('suprland-user'); localStorage.removeItem('suprland-fs'); window.location.reload(); }} />;
-    return <Cli {...p} />;
+    return <Cli {...p} fs={fs} setFs={setFs} user={user} onOpenApp={(kind, url) => { if (url) setBrowserUrl(url); openWindow(kind); }} />;
   };
 
   const isImgWallpaper = settings.wallpaper.startsWith('img:');
@@ -247,6 +260,15 @@ export default function App() {
   if (!user) return <Login onLogin={handleLogin} />;
 
   const showDesktop = !tree && floating.length === 0;
+  const taskbarHeight = settings.autoHide ? 0 : (settings.taskbarPos === 'top' || settings.taskbarPos === 'bottom' ? 85 : 0);
+  const taskbarWidth = settings.autoHide ? 0 : (settings.taskbarPos === 'left' || settings.taskbarPos === 'right' ? 105 : 0);
+  
+  const contentStyle = {
+    paddingBottom: settings.taskbarPos === 'bottom' && !settings.autoHide ? `${taskbarHeight}px` : '0',
+    paddingTop: settings.taskbarPos === 'top' && !settings.autoHide ? `${taskbarHeight}px` : '0',
+    paddingLeft: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
+    paddingRight: settings.taskbarPos === 'right' && !settings.autoHide ? `${taskbarWidth}px` : '0',
+  };
 
   return (
     <>
@@ -254,9 +276,23 @@ export default function App() {
 
         <AnimatePresence>
           {showDesktop && (
-            <motion.div key='desktop' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+            <motion.div key='desktop' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              className="absolute" 
+              style={{
+                top: settings.taskbarPos === 'top' && !settings.autoHide ? `${taskbarHeight}px` : '0',
+                bottom: settings.taskbarPos === 'bottom' && !settings.autoHide ? `${taskbarHeight}px` : '0',
+                left: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
+                right: settings.taskbarPos === 'right' && !settings.autoHide ? `${taskbarWidth}px` : '0',
+              }}>
               <Desktop fs={fs} setFs={setFs} user={user} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
-                onDelete={(path) => { setTrash(prev => [...prev, { name: path.split('/').pop(), path, data: fs[path] }]); setFs(prev => { const n = { ...prev }; delete n[path]; return n; }); }} />
+                onDelete={(path) => { 
+                  setFs(prev => { 
+                    const n = { ...prev }; 
+                    delete n[path]; 
+                    localStorage.setItem('suprland-fs', JSON.stringify(n));
+                    return n; 
+                  }); 
+                }} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -269,6 +305,15 @@ export default function App() {
           if (tiledWin) {
             const isDragging = draggingId === id;
             const isTarget = dragOverId === id;
+            
+            // Calculate actual position accounting for taskbar
+            const topOffset = settings.taskbarPos === 'top' && !settings.autoHide ? taskbarHeight : 0;
+            const leftOffset = settings.taskbarPos === 'left' && !settings.autoHide ? taskbarWidth : 0;
+            const availableHeight = settings.taskbarPos === 'top' || settings.taskbarPos === 'bottom' ? 
+              (settings.autoHide ? 100 : 100 - (taskbarHeight / window.innerHeight * 100)) : 100;
+            const availableWidth = settings.taskbarPos === 'left' || settings.taskbarPos === 'right' ? 
+              (settings.autoHide ? 100 : 100 - (taskbarWidth / window.innerWidth * 100)) : 100;
+            
             return (
               <div key={id}
                 onMouseDown={e => {
@@ -277,8 +322,10 @@ export default function App() {
                 }}
                 className="absolute p-1"
                 style={{
-                  left: `${tiledWin.bounds.x}%`, top: `${tiledWin.bounds.y}%`,
-                  width: `${tiledWin.bounds.w}%`, height: `${tiledWin.bounds.h}%`,
+                  left: `calc(${(tiledWin.bounds.x / 100) * availableWidth}% + ${leftOffset}px)`, 
+                  top: `calc(${(tiledWin.bounds.y / 100) * availableHeight}% + ${topOffset}px)`,
+                  width: `${(tiledWin.bounds.w / 100) * availableWidth}%`, 
+                  height: `${(tiledWin.bounds.h / 100) * availableHeight}%`,
                   zIndex: isDragging ? 30 : tiledWin.focused ? 20 : 10,
                   transition: 'left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease',
                 }}>

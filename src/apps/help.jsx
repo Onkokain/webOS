@@ -9,7 +9,10 @@ WINDOWS
   alt + c        :   open camera
   alt + h        :   open help
   alt + f        :   open file manager
+  alt + b        :   open browser
+  alt + s        :   open settings
   alt + d        :   close focused window
+  alt + shift + f:   toggle float/tile window
   middle click   :   close window
 
 TERMINAL COMMANDS
@@ -21,15 +24,20 @@ TERMINAL COMMANDS
   uname              :   print system info
   uptime             :   print session uptime
   pwd                :   print working directory
-  ls                 :   list terminal files
-  cat <file>         :   print file contents
-  rm <file>          :   delete a file
+  cd <dir>           :   change directory
+  ls [dir]           :   list directory contents
+  mkdir <dir>        :   create a directory
   touch <file>       :   create empty file
+  cat <file>         :   print file contents
+  rm <path>          :   delete file or directory
   history            :   show command history
   cal                :   print current month calendar
   env                :   print environment variables
-  banner <text>      :   print large ascii text
-  clear              :   clear terminal output
+  color <color>      :   change text color (green|cyan|white|yellow|red|reset)
+  browser <url>      :   open url in browser
+  hackertype         :   type like a hacker
+  heaven             :   easter egg
+  clear / cls        :   clear terminal output
 
 NOTEPAD
   alt + s        :   save note to desktop
@@ -41,9 +49,35 @@ CAMERA
   [ save ]       :   save capture to desktop
   [ discard ]    :   discard capture
 
+FILE MANAGER
+  single click   :   select file/folder
+  double click   :   open file or navigate folder
+  ctrl + click   :   toggle selection
+  shift + click  :   select range
+  delete         :   delete selected files
+  ctrl + c       :   copy selected files
+  ctrl + x       :   cut selected files
+  ctrl + v       :   paste files
+  right click    :   context menu
+
 DESKTOP
-  click file     :   open file viewer
-  hover file     :   reveal delete button`;
+  single click   :   select icon
+  double click   :   open file/folder
+  drag icons     :   move icons
+  shift + drag   :   multi-select with band
+  delete         :   delete selected files
+  f2             :   rename selected file
+  ctrl + c       :   copy selected files
+  ctrl + x       :   cut selected files
+  ctrl + v       :   paste files
+  right click    :   context menu
+
+SETTINGS
+  wallpaper      :   change desktop wallpaper
+  taskbar        :   configure taskbar position
+  auto-hide      :   toggle taskbar auto-hide
+  hidden apps    :   hide apps from taskbar
+  reset user     :   clear all data and restart`;
 
  export default function Help({ id, focused, onFocus, onClose }) {
   return (

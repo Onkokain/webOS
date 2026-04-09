@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const BASE = import.meta.env.BASE_URL;
+
 const ALL_APPS = [
-  { kind: 'cli', label: 'Terminal', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><polyline points="3,6 8,10 3,14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><line x1="10" y1="14" x2="17" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
-  { kind: 'notepad', label: 'Notepad', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" /><line x1="7" y1="7" x2="13" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><line x1="7" y1="10" x2="13" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><line x1="7" y1="13" x2="10" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
-  { kind: 'camera', label: 'Camera', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><rect x="1" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" /><polyline points="15,8 19,6 19,14 15,12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="1.5" /></svg> },
-  { kind: 'help', label: 'Help', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" /><path d="M7.5 7.5a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><circle cx="10" cy="15" r="0.75" fill="currentColor" /></svg> },
-  { kind: 'files', label: 'Files', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M2 5a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
-  { kind: 'browser', label: 'Browser', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" /><line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M10 2c-2 2-3 5-3 8s1 6 3 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M10 2c2 2 3 5 3 8s-1 6-3 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
-  { kind: 'settings', label: 'Settings', icon: <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" /><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+  { kind: 'cli',      label: 'Terminal', icon: <img src={`${BASE}icons/cli.svg`}      width="22" height="22" /> },
+  { kind: 'notepad',  label: 'Notepad',  icon: <img src={`${BASE}icons/notepad.svg`}  width="22" height="22" /> },
+  { kind: 'camera',   label: 'Camera',   icon: <img src={`${BASE}icons/camera.svg`}   width="22" height="22" /> },
+  { kind: 'help',     label: 'Help',     icon: <img src={`${BASE}icons/help.svg`}     width="22" height="22" /> },
+  { kind: 'files',    label: 'Files',    icon: <img src={`${BASE}icons/files.svg`}    width="22" height="22" /> },
+  { kind: 'browser',  label: 'Browser',  icon: <img src={`${BASE}icons/browser.svg`}  width="22" height="22" /> },
+  { kind: 'settings', label: 'Settings', icon: <img src={`${BASE}icons/settings.svg`} width="22" height="22" /> },
 ];
 
 const glassStyle = {
@@ -20,10 +22,34 @@ const glassStyle = {
 };
 
 const positionStyles = {
-  bottom: { container: 'absolute bottom-0 left-0 right-0 flex justify-center items-end pb-3', trigger: 'absolute bottom-0 left-0 right-0 h-4', axis: 'flex items-end gap-2 px-4 py-2.5 rounded-2xl', anim: { initial: { y: 80, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: 80, opacity: 0 } } },
-  top: { container: 'absolute top-0 left-0 right-0 flex justify-center items-start pt-3', trigger: 'absolute top-0 left-0 right-0 h-4', axis: 'flex items-start gap-2 px-4 py-2.5 rounded-2xl', anim: { initial: { y: -80, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: -80, opacity: 0 } } },
-  left: { container: 'absolute left-0 top-0 bottom-0 flex justify-start items-center pl-3', trigger: 'absolute left-0 top-0 bottom-0 w-4', axis: 'flex flex-col items-center gap-2 px-2.5 py-4 rounded-2xl', anim: { initial: { x: -80, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: -80, opacity: 0 } } },
-  right: { container: 'absolute right-0 top-0 bottom-0 flex justify-end items-center pr-3', trigger: 'absolute right-0 top-0 bottom-0 w-4', axis: 'flex flex-col items-center gap-2 px-2.5 py-4 rounded-2xl', anim: { initial: { x: 80, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: 80, opacity: 0 } } },
+  bottom: { 
+    container: 'absolute bottom-0 left-0 right-0 flex justify-center items-end pb-3', 
+    containerFixed: 'fixed bottom-0 left-0 right-0 flex justify-center items-end pb-3 h-[85px]',
+    trigger: 'absolute bottom-0 left-0 right-0 h-4', 
+    axis: 'flex items-end gap-2 px-4 py-2.5 rounded-2xl', 
+    anim: { initial: { y: 80, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: 80, opacity: 0 } } 
+  },
+  top: { 
+    container: 'absolute top-0 left-0 right-0 flex justify-center items-start pt-3', 
+    containerFixed: 'fixed top-0 left-0 right-0 flex justify-center items-start pt-3 h-[85px]',
+    trigger: 'absolute top-0 left-0 right-0 h-4', 
+    axis: 'flex items-start gap-2 px-4 py-2.5 rounded-2xl', 
+    anim: { initial: { y: -80, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: -80, opacity: 0 } } 
+  },
+  left: { 
+    container: 'absolute left-0 top-0 bottom-0 flex justify-start items-center pl-3', 
+    containerFixed: 'fixed left-0 top-0 bottom-0 flex justify-start items-center pl-3 w-[105px]',
+    trigger: 'absolute left-0 top-0 bottom-0 w-4', 
+    axis: 'flex flex-col items-center gap-2 px-2.5 py-4 rounded-2xl', 
+    anim: { initial: { x: -80, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: -80, opacity: 0 } } 
+  },
+  right: { 
+    container: 'absolute right-0 top-0 bottom-0 flex justify-end items-center pr-3', 
+    containerFixed: 'fixed right-0 top-0 bottom-0 flex justify-end items-center pr-3 w-[105px]',
+    trigger: 'absolute right-0 top-0 bottom-0 w-4', 
+    axis: 'flex flex-col items-center gap-2 px-2.5 py-4 rounded-2xl', 
+    anim: { initial: { x: 80, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: 80, opacity: 0 } } 
+  },
 };
 
 export default function Taskbar({ onOpen, openKinds, settings }) {
@@ -41,10 +67,10 @@ export default function Taskbar({ onOpen, openKinds, settings }) {
   const hide = () => { if (settings.autoHide) { setVisible(false); setHovered(null); } };
 
   return (
-    <div className={`${pos.container} z-50 pointer-events-none`}>
+    <div className={`${settings.autoHide ? pos.container : pos.containerFixed} z-50 pointer-events-none`}>
       <div className={`${pos.trigger} pointer-events-auto`} onMouseEnter={show} />
       <AnimatePresence>
-        {visible && (
+        {(visible || !settings.autoHide) && (
           <motion.div {...pos.anim} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className={`${pos.axis} pointer-events-auto`} style={glassStyle}
             onMouseEnter={show} onMouseLeave={hide}>

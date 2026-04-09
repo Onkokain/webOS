@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Window from '../ui/window';
 
-export default function Browser({ id, focused, onFocus, onClose }) {
-  const [input, setInput] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');
-  const [url, setUrl] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');
+export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
+  const defaultUrl = initialUrl ?? 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  const [input, setInput] = useState(defaultUrl);
+  const [url, setUrl] = useState(defaultUrl);
 
   const navigate = (e) => {
     e.preventDefault();

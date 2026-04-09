@@ -32,13 +32,21 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
   const dragState = useRef(null);
   const bandState = useRef(null);
 
-  const [positions, setPositions] = useState({});
+  const [positions, setPositions] = useState(() => {
+    const saved = localStorage.getItem(`suprland-desktop-positions-${user}`);
+    return saved ? JSON.parse(saved) : {};
+  });
   const [selected, setSelected] = useState(new Set());
   const [renaming, setRenaming] = useState(null);
   const [menu, setMenu] = useState(null);
   const [clipboard, setClipboard] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [band, setBand] = useState(null);
+  const [editing, setEditing] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem(`suprland-desktop-positions-${user}`, JSON.stringify(positions));
+  }, [positions, user]);
 
   const entries = Object.entries(fs)
     .filter(([p]) => p.startsWith(root) && p !== root && !p.slice(root.length).replace(/\/$/, '').includes('/'))
@@ -118,7 +126,12 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
     if (onDelete) {
       [...selected].forEach(p => onDelete(p));
     } else {
-      setFs(prev => { let n = { ...prev }; [...selected].forEach(p => { n = fsDelete(n, p); }); return n; });
+      setFs(prev => { 
+        let n = { ...prev }; 
+        [...selected].forEach(p => { n = fsDelete(n, p); }); 
+        localStorage.setItem('suprland-fs', JSON.stringify(n));
+        return n; 
+      });
     }
     setPositions(prev => { const n = { ...prev }; [...selected].forEach(p => delete n[p]); return n; });
     setSelected(new Set());
@@ -128,7 +141,11 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
     setRenaming(null);
     if (!newName || newName === path.slice(root.length).replace(/\/$/, '')) return;
     const newPath = root + newName + (fs[path]?.type === 'dir' ? '/' : '');
-    setFs(prev => fsRename(prev, path, newPath));
+    setFs(prev => {
+      const updated = fsRename(prev, path, newPath);
+      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+      return updated;
+    });
     setPositions(prev => { const n = { ...prev }; n[newPath] = n[path]; delete n[path]; return n; });
     setSelected(new Set([newPath]));
   };
@@ -149,6 +166,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
         n = fsCopy(n, path, dest);
         if (clipboard.op === 'cut') n = fsDelete(n, path);
       });
+      localStorage.setItem('suprland-fs', JSON.stringify(n));
       return n;
     });
     setClipboard(null);
@@ -157,6 +175,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
 
   const openEntry = (entry) => {
     if (entry.type === 'dir') { onOpenFolder?.(entry.path); return; }
+    if (entry.type === 'file') { setEditing(entry); return; }
     setViewing(entry);
   };
 
@@ -173,24 +192,31 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
     return () => window.removeEventListener('keydown', h);
   }, [selected, clipboard, fs, renaming]);
 
-  const newFile = () => { setFs(p => ({ ...p, [fsNextName(p, root, 'file', '.txt')]: { type: 'file', text: '' } })); setMenu(null); };
-  const newFolder = () => { setFs(p => ({ ...p, [fsNextName(p, root, 'folder') + '/']: { type: 'dir' } })); setMenu(null); };
+  const newFile = () => { 
+    const newPath = fsNextName(fs, root, 'file', '.txt');
+    setFs(p => {
+      const updated = { ...p, [newPath]: { type: 'file', text: '' } };
+      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+      return updated;
+    }); 
+    setMenu(null); 
+  };
+  const newFolder = () => { 
+    const newPath = fsNextName(fs, root, 'folder') + '/';
+    setFs(p => {
+      const updated = { ...p, [newPath]: { type: 'dir' } };
+      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+      return updated;
+    }); 
+    setMenu(null); 
+  };
 
   return (
     <div ref={ref} className="relative w-full h-full overflow-hidden select-none"
       onMouseDown={onBgMouseDown}
       onContextMenu={e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' }); }}>
 
-      <div className="absolute inset-0 col center pointer-events-none gap-4">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-          <polygon points="26,4 48,14 48,38 26,48 4,38 4,14" stroke="#2a2a2a" strokeWidth="1.5" fill="none" />
-          <polygon points="26,12 40,19 40,33 26,40 12,33 12,19" stroke="#333" strokeWidth="1" fill="none" />
-          <circle cx="26" cy="26" r="3" fill="#3a3a3a" />
-        </svg>
-        <p className="text-gray-700 font-mono text-sm tracking-[0.3em]">Suprland*</p>
-      </div>
-
-      {entries.map(entry => {
+{entries.map(entry => {
         const sel = selected.has(entry.path);
         return (
           <div key={entry.path} className="absolute col items-center gap-1 cursor-pointer"
@@ -216,6 +242,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
         <div className="fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden" style={glassMenu} onMouseDown={e => e.stopPropagation()}>
           {[
             { label: 'Open', fn: () => { openEntry(entries.find(e => e.path === menu.path)); setMenu(null); } },
+            { label: 'Edit', fn: () => { const entry = entries.find(e => e.path === menu.path); if (entry.type === 'file') { setEditing(entry); setMenu(null); } }, hide: entries.find(e => e.path === menu.path)?.type !== 'file' },
             { label: 'Rename', fn: () => { setRenaming(menu.path); setMenu(null); }, hide: selected.size > 1 },
             { label: 'Copy', fn: () => doCopy(selected) },
             { label: 'Cut', fn: () => doCut(selected) },
@@ -227,6 +254,42 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
       )}
 
       <FileViewer file={viewing} onClose={() => setViewing(null)} />
+
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEditing(null)}>
+          <div className="bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl w-[600px] h-[400px] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+              <span className="font-mono text-sm text-gray-300">{editing.name}</span>
+              <button onClick={() => setEditing(null)} className="text-gray-500 hover:text-gray-300 transition-colors">✕</button>
+            </div>
+            <textarea
+              value={editing.text || ''}
+              onChange={e => setEditing({ ...editing, text: e.target.value })}
+              className="flex-1 bg-transparent text-gray-300 font-mono text-sm p-4 outline-none resize-none"
+              placeholder="Type here..."
+            />
+            <div className="flex gap-2 px-4 py-2 border-t border-gray-800">
+              <button
+                onClick={() => {
+                  setFs(prev => {
+                    const updated = { ...prev, [editing.path]: { type: 'file', text: editing.text } };
+                    localStorage.setItem('suprland-fs', JSON.stringify(updated));
+                    return updated;
+                  });
+                  setEditing(null);
+                }}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-mono text-xs transition-colors">
+                Save
+              </button>
+              <button
+                onClick={() => setEditing(null)}
+                className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg font-mono text-xs transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

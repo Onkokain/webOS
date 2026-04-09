@@ -41,11 +41,12 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
       '  history            :   show command history',
       '  cal                :   print current month calendar',
       '  env                :   print environment variables',
-      '  clear              :   clear terminal',   
-      '  color <color>      :   change text color', 
-      '  kill <pid>         :   kill a process',
-      '  hackertype         :   type like a hacker',
+      '  color <color>      :   change text color',
+      '                         (green|cyan|white|yellow|red|reset)',
       '  browser <url>      :   open url in browser',
+      '  hackertype         :   type like a hacker',
+      '  heaven             :   easter egg',
+      '  clear / cls        :   clear terminal',
         ]
 
         case 'cd': {
@@ -130,11 +131,7 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
         }
 
         case 'uptime' : {
-            return 
-                [
-                    `up ${Math.floor(performance.now() / 3600000)}h ${Math.floor((performance.now() % 3600000) / 60000)}m ${Math.floor((performance.now() % 60000) / 1000)}s`
-                ]
-            
+            return [`up ${Math.floor(performance.now() / 3600000)}h ${Math.floor((performance.now() % 3600000) / 60000)}m ${Math.floor((performance.now() % 60000) / 1000)}s`];
         }    
 
         case 'history' : {
@@ -187,8 +184,7 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
         case 'browser' : {
             if (!arg) return ['usage: browser <url>'];
             const url = arg.startsWith('http') ? arg : 'https://' + arg;
-            window.open(url, '_blank');
-            return [`opening ${url}...`];
+            return [`__BROWSER__:${url}`];
         }
 
         case 'clear' :
@@ -198,6 +194,11 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
 
         case 'sudo' : {
             return ['nice try but it ain\'t happening'];
+        }
+
+        case 'heaven' : {
+            const url= 'https://www.youtube.com/embed/QQ80jnUTQEE';
+            return [`__BROWSER__:${url}`];
         }
         default: return [`${base}: command not found`];
     }
@@ -209,11 +210,14 @@ const BOOT= (user) => [
     {k: 'dim', t:'-'.repeat(44)},
 ];
 
-export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
+export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}) {
     const root=`/home/${user}/`;
     const [input,setInput]=useState('');
     const [history,setHistory]=useState(BOOT(user));
-    const [cmdHistory,setCmdHistory]=useState([]);
+    const [cmdHistory,setCmdHistory]=useState(() => {
+        const saved = localStorage.getItem(`suprland-cmd-history-${user}`);
+        return saved ? JSON.parse(saved) : [];
+    });
     const [histIdx,setHistIdx]=useState(-1);
     const [cwd,setCwd]=useState('/home/');
     const [outputColor,setOutputColor]=useState('text-gray-300');
@@ -221,6 +225,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     const bottomRef=useRef(null);
     const inputRef=useRef(null);
     const hackerRef=useRef(null);
+
+    useEffect(() => {
+        localStorage.setItem(`suprland-cmd-history-${user}`, JSON.stringify(cmdHistory));
+    }, [cmdHistory, user]);
 
     const shortCwd=cwd===root ? '~' : cwd==='/home/' ? '/home' : '~/' + cwd.slice(root.length).replace(/\/$/,'');
 
@@ -254,6 +262,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
                 setHistory(h => [...h, {k: 'out', t: lines[i++]}]);
                 scrollBottom();
             }, 50);
+        }
+        else if (out[0]?.startsWith('__BROWSER__:')) {
+            const url = out[0].slice('__BROWSER__:'.length);
+            onOpenApp?.('browser', url);
+            setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}, {k: 'out', t: `launching browser → ${url}`}]);
         }
         else if (out[0]?.startsWith('__COLOR__:')) {
             const color = out[0].split(':')[1];
