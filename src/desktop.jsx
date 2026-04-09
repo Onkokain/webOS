@@ -137,10 +137,11 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
     setFs(prev => {
       let n = { ...prev };
       clipboard.paths.forEach(path => {
-        const name = path.slice(root.length).replace(/\/$/, '');
+        const fullName = path.slice(root.length).replace(/\/$/, '');
         const isDir = prev[path]?.type === 'dir';
-        let dest = fsNextName(n, root, name, isDir ? '' : '');
-        if (isDir) dest += '/';
+        const ext = !isDir && fullName.includes('.') ? '.' + fullName.split('.').pop() : '';
+        const base = ext ? fullName.slice(0, fullName.length - ext.length) : fullName;
+        const dest = fsNextName(n, root, base, ext) + (isDir ? '/' : '');
         n = fsCopy(n, path, dest);
         if (clipboard.op === 'cut') n = fsDelete(n, path);
       });
