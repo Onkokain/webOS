@@ -4,24 +4,44 @@ import {fsDelete} from '../utils/fsUtils';
 
 const HOST='Suprland';
 
-const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
-    const root=`/home/${user}/`;
-    const [base,...rest]=cmd.trim().split(/\s+/);
-    const arg=rest.join(' ');
+const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory, filesystem, setFilesystem) => {
+    const userHomeDirectory = `/home/${user}/`;
+    const commandParts = command.trim().split(/\s+/);
+    const baseCommand = commandParts[0];
+    const commandArguments = commandParts.slice(1).join(' ');
 
-    const resolvePath=(p) => {
-        if (!p || p==='~') return root;
-        if (p.startsWith('/')) return p.endsWith('/') ? p : p+"/";
-        const parts = [...cwd.split('/').filter(Boolean), ...p.split('/').filter(Boolean)];
-        const resolved=[];
-        for (const part of parts) {
-            if (part==='..') resolved.pop();
-            else resolved.push(part);
+    const resolvePath = (inputPath) => {
+        const isHomeShortcut = !inputPath || inputPath === '~';
+        
+        if (isHomeShortcut) {
+            return userHomeDirectory;
         }
-        return '/'+resolved.join('/')+'/';
+        
+        const isAbsolutePath = inputPath.startsWith('/');
+        
+        if (isAbsolutePath) {
+            return inputPath.endsWith('/') ? inputPath : inputPath + "/";
         }
+        
+        const currentPathParts = currentWorkingDirectory.split('/').filter(Boolean);
+        const inputPathParts = inputPath.split('/').filter(Boolean);
+        const allPathParts = [...currentPathParts, ...inputPathParts];
+        const resolvedPathParts = [];
+        
+        for (const pathPart of allPathParts) {
+            const isParentDirectory = pathPart === '..';
+            
+            if (isParentDirectory) {
+                resolvedPathParts.pop();
+            } else {
+                resolvedPathParts.push(pathPart);
+            }
+        }
+        
+        return '/' + resolvedPathParts.join('/') + '/';
+    }
 
-    switch (base.toLowerCase()) {
+    switch (baseCommand.toLowerCase()) {
         case 'help': return [
       'available commands:',
       '  help               :   show this message',
@@ -50,95 +70,89 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
         ]
 
         case 'cd': {
-            const target=resolvePath(arg);
-            if (!target.startsWith(root)) return [`cd: permission denied: cannot go above /home/${user}`];
-            if (target!==root && !fs[target]) return [`cd: ${arg}: no such directory`];
-            setCwd(target);
+            const target = resolvePath(commandArguments);
+            if (!target.startsWith(userHomeDirectory)) return [`cd: permission denied: cannot go above /home/${user}`];
+            if (target !== userHomeDirectory && !filesystem[target]) return [`cd: ${commandArguments}: no such directory`];
+            setCurrentWorkingDirectory(target);
             return [];
         }
 
         case 'ls': {
-            const dir=arg ? resolvePath(arg) : cwd;
-            const entries=Object.keys(fs).filter((k) => {
+            const dir = commandArguments ? resolvePath(commandArguments) : currentWorkingDirectory;
+            const entries = Object.keys(filesystem).filter((k) => {
                 if (k === dir) return false;
                 const rel = k.slice(dir.length);
                 return k.startsWith(dir) && rel.split('/').filter(Boolean).length === 1;
             });
-            return entries.length ? entries.map((k) => k.slice(dir.length).replace(/\/$/, '') + (fs[k].type === 'dir' ? '/' : '')) : ['(empty)'];
+            return entries.length ? entries.map((k) => k.slice(dir.length).replace(/\/$/, '') + (filesystem[k].type === 'dir' ? '/' : '')) : ['(empty)'];
         }
 
         case 'mkdir': {
-            if (!arg) return ['usage: mkdir <dir>'];
-            const path= resolvePath(arg);
-            if (fs[path]) return [`mkdir: ${arg}: already exists`];
-            setFs(p => ({...p, [path]: {type: 'dir'}}));
+            if (!commandArguments) return ['usage: mkdir <dir>'];
+            const path = resolvePath(commandArguments);
+            if (filesystem[path]) return [`mkdir: ${commandArguments}: already exists`];
+            setFilesystem(p => ({...p, [path]: {type: 'dir'}}));
             return [];
         }
 
         case 'touch': {
-            if (!arg) return ['usage: touch <file>'];
-            const path=`${cwd}${arg}`;
-            setFs(p => (
-                {
-                    ...p, [path]: p[path] ?? {type: 'file', text: ''}
-                }
-            ));
+            if (!commandArguments) return ['usage: touch <file>'];
+            const path = `${currentWorkingDirectory}${commandArguments}`;
+            setFilesystem(p => ({
+                ...p, [path]: p[path] ?? {type: 'file', text: ''}
+            }));
             return [];
-            
-
         }
 
         case 'cat': {
-            if (!arg) return ['usage: cat <file>'];
-            const path=`${cwd}${arg}`;
-            if (!fs[path]) return [`cat: ${arg}: no such file`];
-            if (fs[path].type==='dir') return [`cat: ${arg}: is a directory`];
-            return (fs[path].text || '').split('\n');
-
+            if (!commandArguments) return ['usage: cat <file>'];
+            const path = `${currentWorkingDirectory}${commandArguments}`;
+            if (!filesystem[path]) return [`cat: ${commandArguments}: no such file`];
+            if (filesystem[path].type === 'dir') return [`cat: ${commandArguments}: is a directory`];
+            return (filesystem[path].text || '').split('\n');
         }
 
-        case 'rm' : {
-            if (!arg) return ['usage: rm <path>'];
-            const path= arg.endsWith('/') ? resolvePath(arg) :
-            `${cwd}${arg}`;
-            if (!fs[path]) return [`rm: ${arg}: no such file or directory`];
-            setFs(p => fsDelete(p,path));
-            return[];
+        case 'rm': {
+            if (!commandArguments) return ['usage: rm <path>'];
+            const path = commandArguments.endsWith('/') ? resolvePath(commandArguments) : `${currentWorkingDirectory}${commandArguments}`;
+            if (!filesystem[path]) return [`rm: ${commandArguments}: no such file or directory`];
+            setFilesystem(p => fsDelete(p, path));
+            return [];
         }
 
-        case 'pwd' : {
-            return [cwd.slice(0,-1)];
+        case 'pwd': {
+            return [currentWorkingDirectory.slice(0, -1)];
         }
 
-        case 'echo' : {
-            return[arg||''];
+        case 'echo': {
+            return [commandArguments || ''];
         }
 
-        case 'date' : {
+        case 'date': {
             return [new Date().toString()];
         }
 
-        case 'whoami' : {
+        case 'whoami': {
             return [user];
         }
 
-        case 'hostname' : {
+        case 'hostname': {
             return [HOST];
         }
 
-        case 'uname' : {
-            return['Suprland* 0.1 (web-os)']
+        case 'uname': {
+            return ['Suprland* 0.1 (web-os)'];
         }
 
-        case 'uptime' : {
+        case 'uptime': {
             return [`up ${Math.floor(performance.now() / 3600000)}h ${Math.floor((performance.now() % 3600000) / 60000)}m ${Math.floor((performance.now() % 60000) / 1000)}s`];
-        }    
+        }
 
-        case 'history' : {
+        case 'history': {
             return ['__HISTORY__'];
         }
 
-        case 'cal' : {
+        case 'cal': {
             const now = new Date();
             const y = now.getFullYear(), m = now.getMonth();
             const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -154,22 +168,23 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
             return lines;
         }
 
-        case 'hackertype' : {
+        case 'hackertype': {
             return ['__HACKERTYPE__'];
         }
 
-        case 'color' : {
-            if (!arg) return ['usage: color <green|cyan|white|yellow|red|reset>'];
+        case 'color': {
+            if (!commandArguments) return ['usage: color <green|cyan|white|yellow|red|reset>'];
             const valid = ['green','cyan','white','yellow','red','reset'];
-            if (!valid.includes(arg)) return [`color: invalid color. choose: ${valid.join(', ')}`];
-            return [`__COLOR__:${arg}`];
+            if (!valid.includes(commandArguments)) return [`color: invalid color. choose: ${valid.join(', ')}`];
+            return [`__COLOR__:${commandArguments}`];
         }
 
-        case 'kill' : {
-            if (!arg) return ['usage: kill <pid>', 'use ps to list processes'];
-            return [`kill: ${arg}: no such process`];
+        case 'kill': {
+            if (!commandArguments) return ['usage: kill <pid>', 'use ps to list processes'];
+            return [`kill: ${commandArguments}: no such process`];
         }
-        case 'env' : {
+
+        case 'env': {
             return [
                 `USER=${user}`,
                 `HOME=/home/${user}`,
@@ -177,30 +192,31 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
                 `SHELL=/bin/suprsh`,
                 `TERM=xterm-256color`,
                 `OS=Suprland* 0.1`,
-                `PWD=${cwd}`,
+                `PWD=${currentWorkingDirectory}`,
             ];
         }
 
-        case 'browser' : {
-            if (!arg) return ['usage: browser <url>'];
-            const url = arg.startsWith('http') ? arg : 'https://' + arg;
+        case 'browser': {
+            if (!commandArguments) return ['usage: browser <url>'];
+            const url = commandArguments.startsWith('http') ? commandArguments : 'https://' + commandArguments;
             return [`__BROWSER__:${url}`];
         }
 
-        case 'clear' :
-        case 'cls' : {
-            return['__CLEAR__'];                
+        case 'clear':
+        case 'cls': {
+            return ['__CLEAR__'];
         }
 
-        case 'sudo' : {
+        case 'sudo': {
             return ['nice try but it ain\'t happening'];
         }
 
-        case 'heaven' : {
-            const url= 'https://www.youtube.com/embed/QQ80jnUTQEE';
+        case 'heaven': {
+            const url = 'https://www.youtube.com/embed/QQ80jnUTQEE';
             return [`__BROWSER__:${url}`];
         }
-        default: return [`${base}: command not found`];
+
+        default: return [`${baseCommand}: command not found`];
     }
 };
 

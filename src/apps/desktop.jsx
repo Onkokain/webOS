@@ -360,11 +360,26 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
     const handleKeyDown = (e) => {
       if (renaming || selected.size === 0) return;
 
-      if (e.key === 'Delete') deleteSelected();
-      if (e.key === 'F2' && selected.size === 1) setRenaming([...selected][0]);
-      if (e.ctrlKey && e.key === 'c') copyFiles(selected);
-      if (e.ctrlKey && e.key === 'x') cutFiles(selected);
-      if (e.ctrlKey && e.key === 'v') pasteFiles();
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        deleteSelected();
+      }
+      if (e.key === 'F2' && selected.size === 1) {
+        e.preventDefault();
+        setRenaming([...selected][0]);
+      }
+      if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        copyFiles(selected);
+      }
+      if (e.ctrlKey && e.key === 'x') {
+        e.preventDefault();
+        cutFiles(selected);
+      }
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        pasteFiles();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BsTerminalFill } from "react-icons/bs";
+import { BiSolidNotepad } from "react-icons/bi";
+import { IoSettings } from "react-icons/io5";
+import { FaCamera } from "react-icons/fa";
+import { IoMdHelp } from "react-icons/io";
+import { BsBrowserChrome } from "react-icons/bs";
+import { FaFolder } from "react-icons/fa";
 
 const BASE = import.meta.env.BASE_URL;
 
 const ALL_APPS = [
-  { kind: 'cli',      label: 'Terminal', icon: <img src={`${BASE}icons/cli.svg`}      width="22" height="22" /> },
-  { kind: 'notepad',  label: 'Notepad',  icon: <img src={`${BASE}icons/notepad.svg`}  width="22" height="22" /> },
-  { kind: 'camera',   label: 'Camera',   icon: <img src={`${BASE}icons/camera.svg`}   width="22" height="22" /> },
-  { kind: 'help',     label: 'Help',     icon: <img src={`${BASE}icons/help.svg`}     width="22" height="22" /> },
-  { kind: 'files',    label: 'Files',    icon: <img src={`${BASE}icons/files.svg`}    width="22" height="22" /> },
-  { kind: 'browser',  label: 'Browser',  icon: <img src={`${BASE}icons/browser.svg`}  width="22" height="22" /> },
-  { kind: 'settings', label: 'Settings', icon: <img src={`${BASE}icons/settings.svg`} width="22" height="22" /> },
+  { kind: 'cli', label: 'Terminal', icon: <BsTerminalFill size={22} /> },
+  { kind: 'notepad', label: 'Notepad', icon: <BiSolidNotepad size={22} /> },
+  { kind: 'camera', label: 'Camera', icon: <FaCamera size={22} /> },
+  { kind: 'help', label: 'Help', icon: <IoMdHelp size={22} /> },
+  { kind: 'files', label: 'Files', icon: <FaFolder size={22} /> },
+  { kind: 'browser', label: 'Browser', icon: <BsBrowserChrome size={22} /> },
+  { kind: 'settings', label: 'Settings', icon: <IoSettings size={22} /> },
 ];
 
 const glassStyle = {
@@ -56,46 +63,85 @@ export default function Taskbar({ onOpen, openKinds, settings }) {
   const [visible, setVisible] = useState(!settings.autoHide);
   const [hovered, setHovered] = useState(null);
 
-  const pos = positionStyles[settings.taskbarPos] ?? positionStyles.bottom;
-  const apps = ALL_APPS.filter(a => !settings.hiddenApps.includes(a.kind));
-  const isVertical = settings.taskbarPos === 'left' || settings.taskbarPos === 'right';
-  const tooltipClass = isVertical
-    ? settings.taskbarPos === 'left' ? 'absolute left-full ml-2 top-1/2 -translate-y-1/2' : 'absolute right-full mr-2 top-1/2 -translate-y-1/2'
+  const taskbarPosition = positionStyles[settings.taskbarPos] ?? positionStyles.bottom;
+  const visibleApps = ALL_APPS.filter(app => !settings.hiddenApps.includes(app.kind));
+  const isVerticalLayout = settings.taskbarPos === 'left' || settings.taskbarPos === 'right';
+  
+  const tooltipPositionClass = isVerticalLayout
+    ? settings.taskbarPos === 'left'
+      ? 'absolute left-full ml-2 top-1/2 -translate-y-1/2'
+      : 'absolute right-full mr-2 top-1/2 -translate-y-1/2'
     : 'absolute -top-8 left-1/2 -translate-x-1/2';
 
-  const show = () => setVisible(true);
-  const hide = () => { if (settings.autoHide) { setVisible(false); setHovered(null); } };
+  const showTaskbar = () => setVisible(true);
+  
+  const hideTaskbar = () => {
+    if (settings.autoHide) {
+      setVisible(false);
+      setHovered(null);
+    }
+  };
 
   return (
-    <div className={`${settings.autoHide ? pos.container : pos.containerFixed} z-50 pointer-events-none`}>
-      <div className={`${pos.trigger} pointer-events-auto`} onMouseEnter={show} />
+    <div className={`${settings.autoHide ? taskbarPosition.container : taskbarPosition.containerFixed} z-50 pointer-events-none`}>
+      <div
+        className={`${taskbarPosition.trigger} pointer-events-auto`}
+        onMouseEnter={showTaskbar}
+      />
       <AnimatePresence>
         {(visible || !settings.autoHide) && (
-          <motion.div {...pos.anim} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className={`${pos.axis} pointer-events-auto`} style={glassStyle}
-            onMouseEnter={show} onMouseLeave={hide}>
-            {apps.map(({ kind, label, icon }) => {
-              const active = openKinds.includes(kind);
-              const isHov = hovered === kind;
+          <motion.div
+            {...taskbarPosition.anim}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className={`${taskbarPosition.axis} pointer-events-auto`}
+            style={glassStyle}
+            onMouseEnter={showTaskbar}
+            onMouseLeave={hideTaskbar}
+          >
+            {visibleApps.map(({ kind, label, icon }) => {
+              const isAppOpen = openKinds.includes(kind);
+              const isAppHovered = hovered === kind;
+              
               return (
                 <div key={kind} className="flex flex-col items-center gap-1 relative">
                   <AnimatePresence>
-                    {isHov && (
-                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className={`absolute whitespace-nowrap font-mono text-[10px] text-gray-300 px-2 py-0.5 rounded-md pointer-events-none ${tooltipClass}`}
-                        style={{ background: 'rgba(30,30,30,0.85)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}>
+                    {isAppHovered && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={`absolute whitespace-nowrap font-mono text-[10px] text-gray-300 px-2 py-0.5 rounded-md pointer-events-none ${tooltipPositionClass}`}
+                        style={{
+                          background: 'rgba(30,30,30,0.85)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
                         {label}
                       </motion.span>
                     )}
                   </AnimatePresence>
-                  <motion.button onClick={() => onOpen(kind)} onMouseEnter={() => setHovered(kind)} onMouseLeave={() => setHovered(null)}
-                    animate={{ scale: isHov ? 1.25 : 1, ...(isVertical ? { x: isHov ? (settings.taskbarPos === 'left' ? 6 : -6) : 0 } : { y: isHov ? -6 : 0 }) }}
+                  <motion.button
+                    onClick={() => onOpen(kind)}
+                    onMouseEnter={() => setHovered(kind)}
+                    onMouseLeave={() => setHovered(null)}
+                    animate={{
+                      scale: isAppHovered ? 1.25 : 1,
+                      ...(isVerticalLayout
+                        ? { x: isAppHovered ? (settings.taskbarPos === 'left' ? 6 : -6) : 0 }
+                        : { y: isAppHovered ? -6 : 0 })
+                    }}
                     transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                     className="flex items-center justify-center w-11 h-11 rounded-2xl"
-                    style={{ background: active ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: active ? '#d1d5db' : '#6b7280' }}>
+                    style={{
+                      background: isAppOpen ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: isAppOpen ? '#d1d5db' : '#6b7280'
+                    }}
+                  >
                     {icon}
                   </motion.button>
-                  {active && <span className="w-1 h-1 rounded-full bg-gray-400" />}
+                  {isAppOpen && <span className="w-1 h-1 rounded-full bg-gray-400" />}
                 </div>
               );
             })}

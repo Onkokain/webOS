@@ -1,29 +1,73 @@
-export function fsDelete(fs, path) {
-  const n = { ...fs };
-  Object.keys(n).filter(k => k === path || k.startsWith(path)).forEach(k => delete n[k]);
-  return n;
-}
-
-export function fsRename(fs, oldPath, newPath) {
-  const n = { ...fs };
-  Object.keys(n).filter(k => k === oldPath || k.startsWith(oldPath)).forEach(k => {
-    n[newPath + k.slice(oldPath.length)] = n[k];
-    delete n[k];
+export function fsDelete(filesystem, targetPath) {
+  const updatedFilesystem = { ...filesystem };
+  
+  const pathsToDelete = Object.keys(updatedFilesystem).filter(path =>
+    path === targetPath || path.startsWith(targetPath)
+  );
+  
+  pathsToDelete.forEach(path => {
+    delete updatedFilesystem[path];
   });
-  return n;
+  
+  return updatedFilesystem;
 }
 
-export function fsCopy(fs, srcPath, destPath) {
-  const n = { ...fs };
-  Object.keys(n).filter(k => k === srcPath || k.startsWith(srcPath)).forEach(k => {
-    n[destPath + k.slice(srcPath.length)] = { ...n[k] };
+export function fsRename(filesystem, oldPath, newPath) {
+  const updatedFilesystem = { ...filesystem };
+  
+  const pathsToRename = Object.keys(updatedFilesystem).filter(path =>
+    path === oldPath || path.startsWith(oldPath)
+  );
+  
+  pathsToRename.forEach(path => {
+    const relativePath = path.slice(oldPath.length);
+    const newFullPath = newPath + relativePath;
+    
+    updatedFilesystem[newFullPath] = updatedFilesystem[path];
+    delete updatedFilesystem[path];
   });
-  return n;
+  
+  return updatedFilesystem;
 }
 
-export function fsNextName(fs, dir, prefix, ext = '') {
-  if (!fs[`${dir}${prefix}${ext}`] && !fs[`${dir}${prefix}${ext}/`]) return `${dir}${prefix}${ext}`;
-  let n = 2;
-  while (fs[`${dir}${prefix} (${n})${ext}`] || fs[`${dir}${prefix} (${n})${ext}/`]) n++;
-  return `${dir}${prefix} (${n})${ext}`;
+export function fsCopy(filesystem, sourcePath, destinationPath) {
+  const updatedFilesystem = { ...filesystem };
+  
+  const pathsToCopy = Object.keys(updatedFilesystem).filter(path =>
+    path === sourcePath || path.startsWith(sourcePath)
+  );
+  
+  pathsToCopy.forEach(path => {
+    const relativePath = path.slice(sourcePath.length);
+    const newFullPath = destinationPath + relativePath;
+    
+    updatedFilesystem[newFullPath] = { ...updatedFilesystem[path] };
+  });
+  
+  return updatedFilesystem;
+}
+
+export function fsNextName(filesystem, directory, namePrefix, fileExtension = '') {
+  const basePath = `${directory}${namePrefix}${fileExtension}`;
+  const basePathWithSlash = `${basePath}/`;
+  
+  const baseNameExists = filesystem[basePath] || filesystem[basePathWithSlash];
+  
+  if (!baseNameExists) {
+    return basePath;
+  }
+  
+  let counter = 2;
+  
+  while (true) {
+    const numberedPath = `${directory}${namePrefix} (${counter})${fileExtension}`;
+    const numberedPathWithSlash = `${numberedPath}/`;
+    const numberedNameExists = filesystem[numberedPath] || filesystem[numberedPathWithSlash];
+    
+    if (!numberedNameExists) {
+      return numberedPath;
+    }
+    
+    counter++;
+  }
 }

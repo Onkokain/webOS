@@ -166,10 +166,22 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
     const handleKeyDown = (e) => {
       if (selected.size === 0) return;
 
-      if (e.key === 'Delete') deleteSelected();
-      if (e.ctrlKey && e.key === 'c') copyFiles();
-      if (e.ctrlKey && e.key === 'x') cutFiles();
-      if (e.ctrlKey && e.key === 'v') pasteFiles();
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        deleteSelected();
+      }
+      if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        copyFiles();
+      }
+      if (e.ctrlKey && e.key === 'x') {
+        e.preventDefault();
+        cutFiles();
+      }
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        pasteFiles();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

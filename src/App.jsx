@@ -12,10 +12,11 @@ import FileManager from './apps/filemanager';
 import Browser from './apps/browser';
 import Settings from './apps/settings';
 
-const TOTAL_WINDOWS = 8;
+const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
 const SINGLE_WINDOW = ['camera', 'help', 'settings'];
 
+// swaps two apps; hold left click and drag a window over another to swap positions
 function swapIds(node, idA, idB) {
   if (!node) return null;
   if (node.type === 'leaf') {
@@ -27,20 +28,24 @@ function swapIds(node, idA, idB) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => localStorage.getItem('suprland-user'));
+  const [user, setUser] = useState(() => localStorage.getItem('suprland-user')); // username is saved to localstorage
   const [tree, setTree] = useState(null);
   const [activeId, setActiveId] = useState(null);
+
   const [fs, setFs] = useState(() => {
     const saved = localStorage.getItem('suprland-fs');
     return saved ? JSON.parse(saved) : {};
   });
+
   const [fmPath, setFmPath] = useState(null);
   const [floating, setFloating] = useState([]);
   const [registry, setRegistry] = useState({});
+
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('suprland-settings');
     return saved ? JSON.parse(saved) : { wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: false };
   });
+
   const [browserUrl, setBrowserUrl] = useState(null);
   const idRef = useRef(1);
   const [dragOverId, setDragOverId] = useState(null);
@@ -49,152 +54,322 @@ export default function App() {
   const dragTile = useRef(null);
   const screenRef = useRef(null);
 
-  const handleLogin = (u) => {
-    const initialFs = { '/home/': { type: 'dir' }, [`/home/${u}/`]: { type: 'dir' } };
+  const handleLogin = (user) => {
+    const initialFs = { '/home/': { type: 'dir' }, [`/home/${user}/`]: { type: 'dir' } };
     setFs(initialFs);
-    localStorage.setItem('suprland-user', u);
+    localStorage.setItem('suprland-user', user);
     localStorage.setItem('suprland-fs', JSON.stringify(initialFs));
-    setUser(u);
+    setUser(user);
   };
 
   const openWindow = (window_type) => {
     const id = idRef.current++;
     setTree(prev => {
-      if (countLeaves(prev) >= TOTAL_WINDOWS) { idRef.current--; return prev; }
-      if (SINGLE_WINDOW.includes(window_type) && collectLeaves(prev, BOUNDS, null).some(l => l.kind === window_type)) { idRef.current--; return prev; }
-      const leaf = createLeaf(id, window_type);
-      if (!prev) return leaf;
+      const currentLeafCount = countLeaves(prev);
+      
+      if (currentLeafCount >= TOTAL_WINDOWS) {
+        idRef.current--;
+        return prev;
+      }
+      
+      const existingLeaves = collectLeaves(prev, BOUNDS, null);
+      const windowAlreadyOpen = SINGLE_WINDOW.includes(window_type) && existingLeaves.some(leaf => leaf.kind === window_type);
+      
+      if (windowAlreadyOpen) {
+        idRef.current--;
+        return prev;
+      }
+      
+      const newLeaf = createLeaf(id, window_type);
+      
+      if (!prev) {
+        return newLeaf;
+      }
+      
       const targetId = activeId ?? getFirstLeafId(prev);
-      const dir = (getLeafDepth(prev, targetId) ?? 0) % 2 === 0 ? 'vertical' : 'horizontal';
-      return splitNode(prev, targetId, leaf, dir);
+      const targetDepth = getLeafDepth(prev, targetId) ?? 0;
+      const splitDirection = targetDepth % 2 === 0 ? 'vertical' : 'horizontal';
+      
+      return splitNode(prev, targetId, newLeaf, splitDirection);
     });
     setRegistry(prev => ({ ...prev, [id]: window_type }));
     setActiveId(id);
   };
 
   const closeWindow = (id) => {
-    setRegistry(prev => { const n = { ...prev }; delete n[id]; return n; });
-    if (floating.some(f => f.id === id)) {
-      setFloating(prev => prev.filter(f => f.id !== id));
-      if (activeId === id) setActiveId(null);
+    setRegistry(prev => {
+      const updatedRegistry = { ...prev };
+      delete updatedRegistry[id];
+      return updatedRegistry;
+    });
+    
+    const isFloatingWindow = floating.some(floatWindow => floatWindow.id === id);
+    
+    if (isFloatingWindow) {
+      setFloating(prev => prev.filter(floatWindow => floatWindow.id !== id));
+      
+      if (activeId === id) {
+        setActiveId(null);
+      }
+      
       return;
     }
+    
     setTree(prev => {
-      const leaves = collectLeaves(prev, BOUNDS, null);
-      if (leaves.length <= 1) { setActiveId(null); return null; }
-      const idx = leaves.findIndex(l => l.id === id);
-      setActiveId((leaves[idx + 1] ?? leaves[idx - 1]).id);
+      const allLeaves = collectLeaves(prev, BOUNDS, null);
+      
+      if (allLeaves.length <= 1) {
+        setActiveId(null);
+        return null;
+      }
+      
+      const closingWindowIndex = allLeaves.findIndex(leaf => leaf.id === id);
+      const nextActiveWindow = allLeaves[closingWindowIndex + 1] ?? allLeaves[closingWindowIndex - 1];
+      
+      setActiveId(nextActiveWindow.id);
       return removeNode(prev, id);
     });
   };
 
   const floatWindow = (id) => {
-    const leaves = collectLeaves(tree, BOUNDS, null);
-    const win = leaves.find(l => l.id === id);
-    if (!win) return;
-    const rect = screenRef.current?.getBoundingClientRect();
-    const W = rect?.width ?? window.innerWidth;
-    const H = rect?.height ?? window.innerHeight;
-    setFloating(prev => [...prev, { id: win.id, kind: registry[win.id] ?? win.kind, x: W * 0.2, y: H * 0.15, w: W * 0.5, h: H * 0.6 }]);
+    const allLeaves = collectLeaves(tree, BOUNDS, null);
+    const windowToFloat = allLeaves.find(leaf => leaf.id === id);
+    
+    if (!windowToFloat) {
+      return;
+    }
+    
+    const screenRect = screenRef.current?.getBoundingClientRect();
+    const screenWidth = screenRect?.width ?? window.innerWidth;
+    const screenHeight = screenRect?.height ?? window.innerHeight;
+    
+    const floatingWindowConfig = {
+      id: windowToFloat.id,
+      kind: registry[windowToFloat.id] ?? windowToFloat.kind,
+      x: screenWidth * 0.2,
+      y: screenHeight * 0.15,
+      w: screenWidth * 0.5,
+      h: screenHeight * 0.6
+    };
+    
+    setFloating(prev => [...prev, floatingWindowConfig]);
+    
     setTree(prev => {
-      const leaves2 = collectLeaves(prev, BOUNDS, null);
-      if (leaves2.length <= 1) { setActiveId(id); return null; }
-      const idx = leaves2.findIndex(l => l.id === id);
-      setActiveId((leaves2[idx + 1] ?? leaves2[idx - 1]).id);
+      const remainingLeaves = collectLeaves(prev, BOUNDS, null);
+      
+      if (remainingLeaves.length <= 1) {
+        setActiveId(id);
+        return null;
+      }
+      
+      const floatingWindowIndex = remainingLeaves.findIndex(leaf => leaf.id === id);
+      const nextActiveWindow = remainingLeaves[floatingWindowIndex + 1] ?? remainingLeaves[floatingWindowIndex - 1];
+      
+      setActiveId(nextActiveWindow.id);
       return removeNode(prev, id);
     });
   };
 
   const tileWindow = (id) => {
-    const win = floating.find(f => f.id === id);
-    if (!win) return;
-    setFloating(prev => prev.filter(f => f.id !== id));
+    const windowToTile = floating.find(floatWindow => floatWindow.id === id);
+    
+    if (!windowToTile) {
+      return;
+    }
+    
+    setFloating(prev => prev.filter(floatWindow => floatWindow.id !== id));
+    
     setTree(prev => {
-      const leaf = createLeaf(id, win.kind);
-      if (!prev) return leaf;
+      const newLeaf = createLeaf(id, windowToTile.kind);
+      
+      if (!prev) {
+        return newLeaf;
+      }
+      
       const targetId = getFirstLeafId(prev);
-      const dir = (getLeafDepth(prev, targetId) ?? 0) % 2 === 0 ? 'vertical' : 'horizontal';
-      return splitNode(prev, targetId, leaf, dir);
+      const targetDepth = getLeafDepth(prev, targetId) ?? 0;
+      const splitDirection = targetDepth % 2 === 0 ? 'vertical' : 'horizontal';
+      
+      return splitNode(prev, targetId, newLeaf, splitDirection);
     });
+    
     setActiveId(id);
   };
 
   const saveFile = (path, data) => {
     setFs(prev => {
-      const next = { ...prev, [path]: { type: 'file', ...(typeof data === 'string' ? { text: data } : data) } };
-      localStorage.setItem('suprland-fs', JSON.stringify(next));
-      return next;
+      const fileContent = typeof data === 'string' ? { text: data } : data;
+      const updatedFilesystem = {
+        ...prev,
+        [path]: { type: 'file', ...fileContent }
+      };
+      
+      localStorage.setItem('suprland-fs', JSON.stringify(updatedFilesystem));
+      return updatedFilesystem;
     });
   };
 
-  const onTileHeaderMouseDown = (e, winId) => {
-    if (e.button !== 0) return;
-    dragTile.current = { id: winId, startX: e.clientX, startY: e.clientY, moved: false };
-    const onMove = (me) => {
-      if (!dragTile.current) return;
-      if (Math.abs(me.clientX - dragTile.current.startX) + Math.abs(me.clientY - dragTile.current.startY) > 8) {
-        dragTile.current.moved = true;
-        setDraggingId(winId);
-      }
-      if (!dragTile.current.moved) return;
-      setDragPos({ x: me.clientX, y: me.clientY });
-      const rect = screenRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const px = ((me.clientX - rect.left) / rect.width) * 100;
-      const py = ((me.clientY - rect.top) / rect.height) * 100;
-      const leaves = collectLeaves(tree, BOUNDS, null);
-      const over = leaves.find(l => l.id !== winId &&
-        px >= l.bounds.x && px <= l.bounds.x + l.bounds.w &&
-        py >= l.bounds.y && py <= l.bounds.y + l.bounds.h
-      );
-      setDragOverId(over?.id ?? null);
+  const onTileHeaderMouseDown = (event, windowId) => {
+    const isLeftClick = event.button === 0;
+    
+    if (!isLeftClick) {
+      return;
+    }
+    
+    dragTile.current = {
+      id: windowId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false
     };
-    const onUp = (ue) => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+    
+    const handleMouseMove = (moveEvent) => {
+      if (!dragTile.current) {
+        return;
+      }
+      
+      const deltaX = Math.abs(moveEvent.clientX - dragTile.current.startX);
+      const deltaY = Math.abs(moveEvent.clientY - dragTile.current.startY);
+      const totalMovement = deltaX + deltaY;
+      const dragThreshold = 8;
+      
+      if (totalMovement > dragThreshold) {
+        dragTile.current.moved = true;
+        setDraggingId(windowId);
+      }
+      
+      if (!dragTile.current.moved) {
+        return;
+      }
+      
+      setDragPos({ x: moveEvent.clientX, y: moveEvent.clientY });
+      
+      const screenRect = screenRef.current?.getBoundingClientRect();
+      
+      if (!screenRect) {
+        return;
+      }
+      
+      const cursorXPercent = ((moveEvent.clientX - screenRect.left) / screenRect.width) * 100;
+      const cursorYPercent = ((moveEvent.clientY - screenRect.top) / screenRect.height) * 100;
+      
+      const allLeaves = collectLeaves(tree, BOUNDS, null);
+      const hoveredWindow = allLeaves.find(leaf =>
+        leaf.id !== windowId &&
+        cursorXPercent >= leaf.bounds.x &&
+        cursorXPercent <= leaf.bounds.x + leaf.bounds.w &&
+        cursorYPercent >= leaf.bounds.y &&
+        cursorYPercent <= leaf.bounds.y + leaf.bounds.h
+      );
+      
+      setDragOverId(hoveredWindow?.id ?? null);
+    };
+    
+    const handleMouseUp = (upEvent) => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      
       setDragOverId(null);
       setDragPos(null);
       setDraggingId(null);
-      if (!dragTile.current?.moved) { dragTile.current = null; return; }
-      const rect = screenRef.current?.getBoundingClientRect();
-      if (!rect) { dragTile.current = null; return; }
-      const px = ((ue.clientX - rect.left) / rect.width) * 100;
-      const py = ((ue.clientY - rect.top) / rect.height) * 100;
-      const leaves = collectLeaves(tree, BOUNDS, null);
-      const target = leaves.find(l => l.id !== winId &&
-        px >= l.bounds.x && px <= l.bounds.x + l.bounds.w &&
-        py >= l.bounds.y && py <= l.bounds.y + l.bounds.h
-      );
-      if (target) {
-        setTree(prev => swapIds(prev, winId, target.id));
-        setActiveId(winId);
+      
+      if (!dragTile.current?.moved) {
+        dragTile.current = null;
+        return;
       }
+      
+      const screenRect = screenRef.current?.getBoundingClientRect();
+      
+      if (!screenRect) {
+        dragTile.current = null;
+        return;
+      }
+      
+      const dropXPercent = ((upEvent.clientX - screenRect.left) / screenRect.width) * 100;
+      const dropYPercent = ((upEvent.clientY - screenRect.top) / screenRect.height) * 100;
+      
+      const allLeaves = collectLeaves(tree, BOUNDS, null);
+      const targetWindow = allLeaves.find(leaf =>
+        leaf.id !== windowId &&
+        dropXPercent >= leaf.bounds.x &&
+        dropXPercent <= leaf.bounds.x + leaf.bounds.w &&
+        dropYPercent >= leaf.bounds.y &&
+        dropYPercent <= leaf.bounds.y + leaf.bounds.h
+      );
+      
+      if (targetWindow) {
+        setTree(prev => swapIds(prev, windowId, targetWindow.id));
+        setActiveId(windowId);
+      }
+      
       dragTile.current = null;
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const onFloatHeaderMouseDown = (e, id) => {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    setActiveId(id);
-    const win = floating.find(f => f.id === id);
-    const ox = e.clientX - win.x, oy = e.clientY - win.y;
-    const onMove = (me) => setFloating(prev => prev.map(f => f.id === id ? { ...f, x: me.clientX - ox, y: me.clientY - oy } : f));
-    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+  const onFloatHeaderMouseDown = (event, windowId) => {
+    const isLeftClick = event.button === 0;
+    
+    if (!isLeftClick) {
+      return;
+    }
+    
+    event.stopPropagation();
+    setActiveId(windowId);
+    
+    const floatingWindow = floating.find(floatWindow => floatWindow.id === windowId);
+    const offsetX = event.clientX - floatingWindow.x;
+    const offsetY = event.clientY - floatingWindow.y;
+    
+    const handleMouseMove = (moveEvent) => {
+      setFloating(prev => prev.map(floatWindow =>
+        floatWindow.id === windowId
+          ? { ...floatWindow, x: moveEvent.clientX - offsetX, y: moveEvent.clientY - offsetY }
+          : floatWindow
+      ));
+    };
+    
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const onFloatResize = (e, id) => {
-    e.stopPropagation();
-    const win = floating.find(f => f.id === id);
-    const startX = e.clientX, startY = e.clientY, startW = win.w, startH = win.h;
-    const onMove = (me) => setFloating(prev => prev.map(f => f.id === id ? { ...f, w: Math.max(200, startW + me.clientX - startX), h: Math.max(150, startH + me.clientY - startY) } : f));
-    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+  const onFloatResize = (event, windowId) => {
+    event.stopPropagation();
+    
+    const floatingWindow = floating.find(floatWindow => floatWindow.id === windowId);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = floatingWindow.w;
+    const startHeight = floatingWindow.h;
+    const minWidth = 200;
+    const minHeight = 150;
+    
+    const handleMouseMove = (moveEvent) => {
+      setFloating(prev => prev.map(floatWindow =>
+        floatWindow.id === windowId
+          ? {
+              ...floatWindow,
+              w: Math.max(minWidth, startWidth + moveEvent.clientX - startX),
+              h: Math.max(minHeight, startHeight + moveEvent.clientY - startY)
+            }
+          : floatWindow
+      ));
+    };
+    
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
   useEffect(() => {
@@ -202,22 +377,63 @@ export default function App() {
   }, [settings]);
 
   useEffect(() => {
-    const handler = (e) => {
-      if (!e.altKey) return;
-      const k = e.key.toLowerCase();
-      if (e.shiftKey && k === 'f') {
-        e.preventDefault();
-        if (activeId == null) return;
-        if (floating.some(f => f.id === activeId)) tileWindow(activeId);
-        else floatWindow(activeId);
+    const handleKeyDown = (event) => {
+      const altKeyPressed = event.altKey;
+      
+      if (!altKeyPressed) {
         return;
       }
-      const map = { enter: 'cli', n: 'notepad', c: 'camera', h: 'help', f: 'files', b: 'browser', s: 'settings' };
-      if (map[k] || e.key === 'Enter') { e.preventDefault(); openWindow(map[k] ?? 'cli'); }
-      if (k === 'd') { e.preventDefault(); if (activeId != null) closeWindow(activeId); }
+      
+      const key = event.key.toLowerCase();
+      const shiftKeyPressed = event.shiftKey;
+      
+      if (shiftKeyPressed && key === 'f') {
+        event.preventDefault();
+        
+        if (activeId == null) {
+          return;
+        }
+        
+        const isCurrentWindowFloating = floating.some(floatWindow => floatWindow.id === activeId);
+        
+        if (isCurrentWindowFloating) {
+          tileWindow(activeId);
+        } else {
+          floatWindow(activeId);
+        }
+        
+        return;
+      }
+      
+      const keyToAppMap = {
+        enter: 'cli',
+        n: 'notepad',
+        c: 'camera',
+        h: 'help',
+        f: 'files',
+        b: 'browser',
+        s: 'settings'
+      };
+      
+      const appToOpen = keyToAppMap[key];
+      const isEnterKey = event.key === 'Enter';
+      
+      if (appToOpen || isEnterKey) {
+        event.preventDefault();
+        openWindow(appToOpen ?? 'cli');
+      }
+      
+      if (key === 'd') {
+        event.preventDefault();
+        
+        if (activeId != null) {
+          closeWindow(activeId);
+        }
+      }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeId, tree, floating]);
 
   const tiledWindows = collectLeaves(tree, BOUNDS, activeId);
@@ -232,25 +448,75 @@ export default function App() {
     h: 100
   };
 
-  const winProps = (id, focused) => ({
-    id, focused,
+  const winProps = (windowId, isFocused) => ({
+    id: windowId,
+    focused: isFocused,
     onFocus: setActiveId,
     onClose: closeWindow,
-    onSave: (name, data) => saveFile(`/home/${user}/${name}`, data),
-    fs, setFs, user, fmPath,
+    onSave: (fileName, fileData) => saveFile(`/home/${user}/${fileName}`, fileData),
+    fs,
+    setFs,
+    user,
+    fmPath,
   });
 
-  const renderById = (id, focused) => {
-    const kind = registry[id];
-    const p = winProps(id, focused);
-    if (kind === 'notepad') return <Notepad {...p} />;
-    if (kind === 'camera') return <Camera {...p} />;
-    if (kind === 'help') return <Help {...p} />;
-    if (kind === 'files') return <FileManager {...p} initialPath={fmPath} />;
-    if (kind === 'browser') return <Browser {...p} initialUrl={browserUrl} />;
-    if (kind === 'settings') return <Settings {...p} settings={settings} onSettings={setSettings} 
-        onResetUser={() => { localStorage.removeItem('suprland-user'); localStorage.removeItem('suprland-fs'); window.location.reload(); }} />;
-    return <Cli {...p} fs={fs} setFs={setFs} user={user} onOpenApp={(kind, url) => { if (url) setBrowserUrl(url); openWindow(kind); }} />;
+  const renderById = (windowId, isFocused) => {
+    const windowKind = registry[windowId];
+    const windowProps = winProps(windowId, isFocused);
+    
+    if (windowKind === 'notepad') {
+      return <Notepad {...windowProps} />;
+    }
+    
+    if (windowKind === 'camera') {
+      return <Camera {...windowProps} />;
+    }
+    
+    if (windowKind === 'help') {
+      return <Help {...windowProps} />;
+    }
+    
+    if (windowKind === 'files') {
+      return <FileManager {...windowProps} initialPath={fmPath} />;
+    }
+    
+    if (windowKind === 'browser') {
+      return <Browser {...windowProps} initialUrl={browserUrl} />;
+    }
+    
+    if (windowKind === 'settings') {
+      const handleResetUser = () => {
+        localStorage.removeItem('suprland-user');
+        localStorage.removeItem('suprland-fs');
+        window.location.reload();
+      };
+      
+      return (
+        <Settings
+          {...windowProps}
+          settings={settings}
+          onSettings={setSettings}
+          onResetUser={handleResetUser}
+        />
+      );
+    }
+    
+    const handleOpenApp = (appKind, url) => {
+      if (url) {
+        setBrowserUrl(url);
+      }
+      openWindow(appKind);
+    };
+    
+    return (
+      <Cli
+        {...windowProps}
+        fs={fs}
+        setFs={setFs}
+        user={user}
+        onOpenApp={handleOpenApp}
+      />
+    );
   };
 
   const isImgWallpaper = settings.wallpaper.startsWith('img:');

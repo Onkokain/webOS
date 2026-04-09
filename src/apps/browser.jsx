@@ -6,12 +6,18 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
   const [input, setInput] = useState(defaultUrl);
   const [url, setUrl] = useState(defaultUrl);
 
-  const navigate = (e) => {
-    e.preventDefault();
-    let target = input.trim();
-    if (!target.startsWith('http://') && !target.startsWith('https://')) target = 'https://' + target;
-    setUrl(target);
-    setInput(target);
+  const navigate = (event) => {
+    event.preventDefault();
+    
+    let targetUrl = input.trim();
+    const hasProtocol = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
+    
+    if (!hasProtocol) {
+      targetUrl = 'https://' + targetUrl;
+    }
+    
+    setUrl(targetUrl);
+    setInput(targetUrl);
   };
 
   return (
@@ -20,7 +26,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
         <button type="button" onClick={() => { setUrl(url); }} className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1">↺</button>
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={event => setInput(event.target.value)}
           className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-gray-300 font-mono text-xs outline-none focus:border-gray-500 transition-colors"
           spellCheck="false"
           autoComplete="off"

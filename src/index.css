@@ -67,27 +67,31 @@
   }
 
   .context-menu {
-    @apply fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden glass-panel;
+    @apply fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden;
+    background: rgba(18, 18, 18, 0.92);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   }
 
   .context-menu-item {
-    @apply px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 text-gray-400 hover:text-gray-200;
+    @apply px-4 py-2 text-left transition-colors hover:bg-white/5 text-gray-400 hover:text-gray-200 font-mono text-xs;
   }
 
   .context-menu-item-danger {
-    @apply px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 text-red-400;
+    @apply px-4 py-2 text-left transition-colors hover:bg-white/5 text-red-400 font-mono text-xs;
   }
 
   .table-row {
-    @apply group text-gray-400 hover:text-gray-200 cursor-pointer transition-colors;
+    @apply text-gray-400 hover:text-gray-200 cursor-pointer transition-colors;
   }
 
   .table-row-selected {
-    @apply group text-gray-400 hover:text-gray-200 cursor-pointer transition-colors bg-blue-900/30;
+    @apply text-gray-400 hover:text-gray-200 cursor-pointer transition-colors bg-blue-900/30;
   }
 
   .desktop-icon {
-    @apply absolute col items-center gap-1 cursor-pointer;
+    @apply absolute flex flex-col items-center gap-1 cursor-pointer;
   }
 
   .desktop-icon-bg {
