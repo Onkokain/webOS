@@ -1,6 +1,6 @@
 import { useEffect, useState,useRef } from "react";
-import Window from './window';
-import {fsDelete} from './fsUtils';
+import Window from '../ui/window';
+import {fsDelete} from '../utils/fsUtils';
 
 const HOST='Suprland';
 
@@ -142,36 +142,62 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
         }
 
         case 'cal' : {
-            return['cal: under developement'];
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth();
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m + 1, 0).getDate();
+            const lines = [`   ${months[m]} ${y}`, 'Su Mo Tu We Th Fr Sa'];
+            let row = '   '.repeat(first);
+            for (let d = 1; d <= days; d++) {
+                row += String(d).padStart(2) + ' ';
+                if ((first + d) % 7 === 0) { lines.push(row.trimEnd()); row = ''; }
+            }
+            if (row.trim()) lines.push(row.trimEnd());
+            return lines;
         }
 
         case 'hackertype' : {
-            return['hackertype: under developement'];
-            
+            return ['__HACKERTYPE__'];
         }
 
         case 'color' : {
-            return['color: under developement'];
-            
+            if (!arg) return ['usage: color <green|cyan|white|yellow|red|reset>'];
+            const valid = ['green','cyan','white','yellow','red','reset'];
+            if (!valid.includes(arg)) return [`color: invalid color. choose: ${valid.join(', ')}`];
+            return [`__COLOR__:${arg}`];
         }
 
         case 'kill' : {
-            return['kill: under developement'];
-            
+            if (!arg) return ['usage: kill <pid>', 'use ps to list processes'];
+            return [`kill: ${arg}: no such process`];
         }
         case 'env' : {
-            return['env: under developement'];
-            
+            return [
+                `USER=${user}`,
+                `HOME=/home/${user}`,
+                `HOSTNAME=${HOST}`,
+                `SHELL=/bin/suprsh`,
+                `TERM=xterm-256color`,
+                `OS=Suprland* 0.1`,
+                `PWD=${cwd}`,
+            ];
         }
 
         case 'browser' : {
-            return['browser: under developement'];
-            
+            if (!arg) return ['usage: browser <url>'];
+            const url = arg.startsWith('http') ? arg : 'https://' + arg;
+            window.open(url, '_blank');
+            return [`opening ${url}...`];
         }
 
         case 'clear' :
         case 'cls' : {
             return['__CLEAR__'];                
+        }
+
+        case 'sudo' : {
+            return ['nice try but it ain\'t happening'];
         }
         default: return [`${base}: command not found`];
     }
@@ -190,8 +216,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     const [cmdHistory,setCmdHistory]=useState([]);
     const [histIdx,setHistIdx]=useState(-1);
     const [cwd,setCwd]=useState('/home/');
+    const [outputColor,setOutputColor]=useState('text-gray-300');
+    const [hackerActive,setHackerActive]=useState(false);
     const bottomRef=useRef(null);
     const inputRef=useRef(null);
+    const hackerRef=useRef(null);
 
     const shortCwd=cwd===root ? '~' : cwd==='/home/' ? '/home' : '~/' + cwd.slice(root.length).replace(/\/$/,'');
 
@@ -213,6 +242,25 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
                 ...cmdHistory.map((c,i) => ({k : 'out', t: ` ${cmdHistory.length-i} ${c}`}))
             ]);
         }
+        else if (out[0]==='__HACKERTYPE__') {
+            setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}]);
+            setOutputColor('text-green-400');
+            setHackerActive(true);
+            const chars = `abcdefghijklmnopqrst uvwxyz01 23456789!@#$%^&*(){}[]<>/\\|=+-_`;
+            const lines = Array.from({length: 4000}, () => Array.from({length: Math.floor(Math.random()*60+20)}, () => chars[Math.floor(Math.random()*chars.length)]).join(''));
+            let i = 0;
+            hackerRef.current = setInterval(() => {
+                if (i >= lines.length) { clearInterval(hackerRef.current); setHackerActive(false); return; }
+                setHistory(h => [...h, {k: 'out', t: lines[i++]}]);
+                scrollBottom();
+            }, 50);
+        }
+        else if (out[0]?.startsWith('__COLOR__:')) {
+            const color = out[0].split(':')[1];
+            const colorMap = { green:'text-green-400', cyan:'text-cyan-400', white:'text-white', yellow:'text-yellow-400', red:'text-red-400', reset:'text-gray-300' };
+            setOutputColor(colorMap[color] ?? 'text-gray-300');
+            setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}, {k: 'out', t: `color set to ${color}`}]);
+        }
         else {
             setHistory((h) => [...h,
                 {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`},
@@ -227,6 +275,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     };
 
     const onKeyDown=(e) => {
+        if (e.ctrlKey && e.key === 'c' || e.key === 'Escape') {
+            if (hackerActive) { clearInterval(hackerRef.current); setHackerActive(false); setHistory(h => [...h, {k:'out', t:'^C'}]); }
+            return;
+        }
         if (e.key === 'ArrowUp') {
             e.preventDefault();
             const i= Math.min(histIdx+1,cmdHistory.length-1);
@@ -247,7 +299,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
             <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll text-[clamp(0.65rem,4cqw,0.8rem)]"
                 onClick={() => inputRef.current?.focus()}>
                 {history.map((l, i) => (
-                <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : 'text-gray-300'}>{l.t}</div>
+                <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : outputColor}>{l.t}</div>
                 ))}
                 <div ref={bottomRef} />
             </div>

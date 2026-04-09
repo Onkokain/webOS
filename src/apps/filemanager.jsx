@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import Window from './window';
-import FileViewer from './viewer';
-import ContextMenu from './contextmenu';
-import { getIcon } from './icons';
-import { fsDelete, fsNextName } from './fsUtils';
+import Window from '../ui/window';
+import FileViewer from '../ui/viewer';
+import ContextMenu from '../ui/contextmenu';
+import { getIcon } from '../ui/icons';
+import { fsDelete, fsNextName } from '../utils/fsUtils';
 
 export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, user, initialPath }) {
   const root = `/home/${user}/`;

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { getIcon } from './icons';
-import FileViewer from './viewer';
-import ContextMenu from './contextmenu';
-import { fsDelete, fsRename, fsCopy, fsNextName } from './fsUtils';
+import { getIcon } from '../ui/icons';
+import FileViewer from '../ui/viewer';
+import ContextMenu from '../ui/contextmenu';
+import { fsDelete, fsRename, fsCopy, fsNextName } from '../utils/fsUtils';
 
 const W = 72, H = 84;
 const autoPos = (i) => ({ x: 16 + Math.floor(i / 9) * (W + 20), y: 16 + (i % 9) * (H + 8) });
@@ -26,7 +26,7 @@ function RenameInput({ name, onDone }) {
   );
 }
 
-export default function Desktop({ fs, setFs, user, onOpenFolder }) {
+export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
   const root = `/home/${user}/`;
   const ref = useRef(null);
   const dragState = useRef(null);
@@ -115,7 +115,11 @@ export default function Desktop({ fs, setFs, user, onOpenFolder }) {
   };
 
   const deleteSelected = () => {
-    setFs(prev => { let n = { ...prev }; [...selected].forEach(p => { n = fsDelete(n, p); }); return n; });
+    if (onDelete) {
+      [...selected].forEach(p => onDelete(p));
+    } else {
+      setFs(prev => { let n = { ...prev }; [...selected].forEach(p => { n = fsDelete(n, p); }); return n; });
+    }
     setPositions(prev => { const n = { ...prev }; [...selected].forEach(p => delete n[p]); return n; });
     setSelected(new Set());
   };

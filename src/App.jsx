@@ -1,19 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { createLeaf, countLeaves, getFirstLeafId, getLeafDepth, splitNode, removeNode, collectLeaves } from './tree';
-import Cli from "./cmd";
-import Notepad from "./notepad";
-import Camera from "./camera";
-import Help from './help';
-import Desktop from "./desktop";
-import Taskbar from "./taskbar";
-import Login from "./login";
-import FileManager from './filemanager';
-import Browser from './browser';
+import { createLeaf, countLeaves, getFirstLeafId, getLeafDepth, splitNode, removeNode, collectLeaves } from './utils/tree';
+import Cli from './apps/cmd';
+import Notepad from './apps/notepad';
+import Camera from './apps/camera';
+import Help from './apps/help';
+import Desktop from './apps/desktop';
+import Taskbar from './apps/taskbar';
+import Login from './apps/login';
+import FileManager from './apps/filemanager';
+import Browser from './apps/browser';
+import Settings from './apps/settings';
 
 const TOTAL_WINDOWS = 8;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
-const SINGLE_WINDOW = ['camera', 'help', 'files', 'browser'];
+const SINGLE_WINDOW = ['camera', 'help', 'files', 'browser', 'settings'];
 
 function swapIds(node, idA, idB) {
   if (!node) return null;
@@ -26,13 +27,18 @@ function swapIds(node, idA, idB) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => localStorage.getItem('suprland-user'));
   const [tree, setTree] = useState(null);
   const [activeId, setActiveId] = useState(null);
-  const [fs, setFs] = useState({});
+  const [fs, setFs] = useState(() => {
+    const saved = localStorage.getItem('suprland-fs');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [fmPath, setFmPath] = useState(null);
   const [floating, setFloating] = useState([]);
   const [registry, setRegistry] = useState({});
+  const [settings, setSettings] = useState({ wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: true });
+  const [trash, setTrash] = useState([]);
   const idRef = useRef(1);
   const [dragOverId, setDragOverId] = useState(null);
   const [dragPos, setDragPos] = useState(null);
@@ -41,7 +47,10 @@ export default function App() {
   const screenRef = useRef(null);
 
   const handleLogin = (u) => {
-    setFs({ '/home/': { type: 'dir' }, [`/home/${u}/`]: { type: 'dir' } });
+    const initialFs = { '/home/': { type: 'dir' }, [`/home/${u}/`]: { type: 'dir' } };
+    setFs(initialFs);
+    localStorage.setItem('suprland-user', u);
+    localStorage.setItem('suprland-fs', JSON.stringify(initialFs));
     setUser(u);
   };
 
@@ -108,7 +117,11 @@ export default function App() {
   };
 
   const saveFile = (path, data) => {
-    setFs(prev => ({ ...prev, [path]: { type: 'file', ...(typeof data === 'string' ? { text: data } : data) } }));
+    setFs(prev => {
+      const next = { ...prev, [path]: { type: 'file', ...(typeof data === 'string' ? { text: data } : data) } };
+      localStorage.setItem('suprland-fs', JSON.stringify(next));
+      return next;
+    });
   };
 
   const onTileHeaderMouseDown = (e, winId) => {
@@ -192,7 +205,7 @@ export default function App() {
         else floatWindow(activeId);
         return;
       }
-      const map = { enter: 'cli', n: 'notepad', c: 'camera', h: 'help', f: 'files', b: 'browser' };
+      const map = { enter: 'cli', n: 'notepad', c: 'camera', h: 'help', f: 'files', b: 'browser', s: 'settings' };
       if (map[k] || e.key === 'Enter') { e.preventDefault(); openWindow(map[k] ?? 'cli'); }
       if (k === 'd') { e.preventDefault(); if (activeId != null) closeWindow(activeId); }
     };
@@ -220,8 +233,16 @@ export default function App() {
     if (kind === 'help') return <Help {...p} />;
     if (kind === 'files') return <FileManager {...p} initialPath={fmPath} />;
     if (kind === 'browser') return <Browser {...p} />;
+    if (kind === 'settings') return <Settings {...p} settings={settings} onSettings={setSettings} trash={trash}
+        onRestoreTrash={i => { const item = trash[i]; setFs(prev => ({ ...prev, [item.path]: item.data })); setTrash(prev => prev.filter((_, j) => j !== i)); }}
+        onEmptyTrash={() => setTrash([])}
+        onResetUser={() => { localStorage.removeItem('suprland-user'); localStorage.removeItem('suprland-fs'); window.location.reload(); }} />;
     return <Cli {...p} />;
   };
+
+  const isImgWallpaper = settings.wallpaper.startsWith('img:');
+  const wallpaperClass = isImgWallpaper ? 'bg-black' : settings.wallpaper.replace('color:', '');
+  const wallpaperStyle = isImgWallpaper ? { backgroundImage: `url(${settings.wallpaper.replace('img:', '')})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {};
 
   if (!user) return <Login onLogin={handleLogin} />;
 
@@ -229,12 +250,13 @@ export default function App() {
 
   return (
     <>
-      <div ref={screenRef} className="relative w-screen h-screen overflow-hidden bg-black">
+      <div ref={screenRef} className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`} style={wallpaperStyle}>
 
         <AnimatePresence>
           {showDesktop && (
             <motion.div key='desktop' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
-              <Desktop fs={fs} setFs={setFs} user={user} onOpenFolder={path => { setFmPath(path); openWindow('files'); }} />
+              <Desktop fs={fs} setFs={setFs} user={user} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
+                onDelete={(path) => { setTrash(prev => [...prev, { name: path.split('/').pop(), path, data: fs[path] }]); setFs(prev => { const n = { ...prev }; delete n[path]; return n; }); }} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -308,7 +330,7 @@ export default function App() {
           );
         })()}
 
-        <Taskbar onOpen={openWindow} openKinds={allKinds} />
+        <Taskbar onOpen={openWindow} openKinds={allKinds} settings={settings} />
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Window from './window';
+import Window from '../ui/window';
 
 export default function Browser({ id, focused, onFocus, onClose }) {
   const [input, setInput] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');

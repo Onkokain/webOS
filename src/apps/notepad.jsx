@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Window from './window';
+import Window from '../ui/window';
 
 export default function Notepad({ id, focused, onFocus, onClose, onSave }) {
   const [text, setText] = useState('');

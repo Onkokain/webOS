@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import Window from './window';
+import Window from '../ui/window';
 
 function AudioVisualizer({stream}) {
   const canvasRef= useRef(null);

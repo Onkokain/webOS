@@ -1,4 +1,4 @@
-import Window from './window';
+import Window from '../ui/window';
 
 const CONTENT = `SUPRLAND* — KEYBOARD SHORTCUTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
