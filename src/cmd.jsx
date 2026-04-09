@@ -50,7 +50,7 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
 
         case 'cd': {
             const target=resolvePath(arg);
-            if (!target.startsWith(root)) return [``];
+            if (!target.startsWith(root)) return [`cd: permission denied: cannot go above /home/${user}`];
             if (target!==root && !fs[target]) return [`cd: ${arg}: no such directory`];
             setCwd(target);
             return [];
@@ -164,17 +164,13 @@ const run=(cmd,user,cwd,setCwd,fs,setFs)=> {
             
         }
 
-        case 'kill' : {
-            return['kill: under developement'];
-            
-        }
-
         case 'browser' : {
             return['browser: under developement'];
             
         }
 
-        case 'clear' : {
+        case 'clear' :
+        case 'cls' : {
             return['__CLEAR__'];                
         }
         default: return [`${base}: command not found`];
@@ -189,7 +185,7 @@ const BOOT= (user) => [
 
 export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     const root=`/home/${user}/`;
-    const [imput,setInput]=useState('');
+    const [input,setInput]=useState('');
     const [history,setHistory]=useState(BOOT(user));
     const [cmdHistory,setCmdHistory]=useState([]);
     const [histIdx,setHistIdx]=useState(-1);
@@ -197,7 +193,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     const bottomRef=useRef(null);
     const inputRef=useRef(null);
 
-    const shortCwd=cwd===root ? '~' : cwd==='/home/' ? 'home' : '~/' + cwd.slice(root.length).replace(/\/$/,'');
+    const shortCwd=cwd===root ? '~' : cwd==='/home/' ? '/home' : '~/' + cwd.slice(root.length).replace(/\/$/,'');
 
     const scrollBottom= () => setTimeout(() => bottomRef.current?.scrollIntoView(),0);
 
@@ -248,15 +244,15 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
     return (
         <>
             <Window id={id} title={`${user}@${HOST}`} focused={focused} onFocus={onFocus} onClose={onClose}>
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll"
-                style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} onClick={() => inputRef.current?.focus()}>
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll text-[clamp(0.65rem,4cqw,0.8rem)]"
+                onClick={() => inputRef.current?.focus()}>
                 {history.map((l, i) => (
                 <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : 'text-gray-300'}>{l.t}</div>
                 ))}
                 <div ref={bottomRef} />
             </div>
             <form onSubmit={submit} className="flex-shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
-                <span className="font-mono whitespace-nowrap" style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }}>
+                <span className="font-mono whitespace-nowrap text-[clamp(0.65rem,4cqw,0.8rem)]" >
                 <span className="text-cyan-500">{user}</span>
                 <span className="text-gray-600">@</span>
                 <span className="text-purple-400">{HOST}</span>
@@ -264,14 +260,12 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs}) {
                 </span>
                 <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
                 value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={onKeyDown}
-                className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0"
-                style={{ fontSize: 'clamp(0.65rem, 4cqw, 0.8rem)' }} spellCheck="false" autoComplete="off" />
+                className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0 text-[clamp(0.65rem,4cqw,0.8rem)]"
+                spellCheck="false" autoComplete="off" />
             </form>
             </Window>
         
         
         </>
     )
-
-
 }
