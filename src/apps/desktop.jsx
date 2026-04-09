@@ -2,27 +2,45 @@ import { useEffect, useRef, useState } from 'react';
 import { getIcon } from '../ui/icons';
 import FileViewer from '../ui/viewer';
 import ContextMenu from '../ui/contextmenu';
+import TextEditor from '../ui/texteditor';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { fsDelete, fsRename, fsCopy, fsNextName } from '../utils/fsUtils';
 
-const W = 72, H = 84;
-const autoPos = (i) => ({ x: 16 + Math.floor(i / 9) * (W + 20), y: 16 + (i % 9) * (H + 8) });
+const ICON_WIDTH = 72;
+const ICON_HEIGHT = 84;
 
-const glassMenu = {
-  background: 'rgba(18,18,18,0.92)', backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', minWidth: 140,
-};
+function getAutoPosition(index) {
+  return {
+    x: 16 + Math.floor(index / 9) * (ICON_WIDTH + 20),
+    y: 16 + (index % 9) * (ICON_HEIGHT + 8)
+  };
+}
 
 function RenameInput({ name, onDone }) {
-  const [val, setVal] = useState(name);
+  const [value, setValue] = useState(name);
   const ref = useRef(null);
-  useEffect(() => { ref.current?.select(); }, []);
+
+  useEffect(() => {
+    ref.current?.select();
+  }, []);
+
+  const handleSubmit = () => onDone(value);
+  const handleCancel = () => onDone(null);
+
   return (
-    <input ref={ref} value={val} onChange={e => setVal(e.target.value)}
-      onBlur={() => onDone(val)}
-      onKeyDown={e => { if (e.key === 'Enter') onDone(val); if (e.key === 'Escape') onDone(null); }}
+    <input 
+      ref={ref}
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onBlur={handleSubmit}
+      onKeyDown={e => {
+        if (e.key === 'Enter') handleSubmit();
+        if (e.key === 'Escape') handleCancel();
+      }}
       onMouseDown={e => e.stopPropagation()}
       className="w-full text-center bg-gray-800 border border-gray-600 rounded text-gray-200 font-mono outline-none px-1"
-      style={{ fontSize: 9 }} />
+      style={{ fontSize: 9 }}
+    />
   );
 }
 
@@ -32,264 +50,483 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
   const dragState = useRef(null);
   const bandState = useRef(null);
 
-  const [positions, setPositions] = useState(() => {
-    const saved = localStorage.getItem(`suprland-desktop-positions-${user}`);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [positions, setPositions] = useLocalStorage(`suprland-desktop-positions-${user}`, {});
   const [selected, setSelected] = useState(new Set());
   const [renaming, setRenaming] = useState(null);
   const [menu, setMenu] = useState(null);
   const [clipboard, setClipboard] = useState(null);
   const [viewing, setViewing] = useState(null);
-  const [band, setBand] = useState(null);
   const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    localStorage.setItem(`suprland-desktop-positions-${user}`, JSON.stringify(positions));
-  }, [positions, user]);
+  const [band, setBand] = useState(null);
 
   const entries = Object.entries(fs)
-    .filter(([p]) => p.startsWith(root) && p !== root && !p.slice(root.length).replace(/\/$/, '').includes('/'))
-    .map(([path, v], i) => ({ path, name: path.slice(root.length).replace(/\/$/, ''), ...v, ...(positions[path] ?? autoPos(i)) }));
+    .filter(([path]) => {
+      if (path === root) return false;
+      const relative = path.slice(root.length).replace(/\/$/, '');
+      return path.startsWith(root) && !relative.includes('/');
+    })
+    .map(([path, data], index) => ({
+      path,
+      name: path.slice(root.length).replace(/\/$/, ''),
+      ...data,
+      ...(positions[path] || getAutoPosition(index))
+    }));
 
-  const getPos = (path) => positions[path] ?? autoPos(entries.findIndex(e => e.path === path));
+  const getPosition = (path) => {
+    return positions[path] || getAutoPosition(entries.findIndex(e => e.path === path));
+  };
 
-  const onIconMouseDown = (e, path) => {
+  const saveFs = (updater) => {
+    setFs(prev => {
+      const updated = updater(prev);
+      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleIconMouseDown = (e, path) => {
     if (e.button !== 0) return;
     e.stopPropagation();
     e.preventDefault();
-    const newSel = e.shiftKey ? new Set([...selected, path]) : selected.has(path) ? selected : new Set([path]);
-    setSelected(newSel);
-    const paths = [...newSel];
-    const startPos = Object.fromEntries(paths.map(p => [p, getPos(p)]));
-    dragState.current = { paths, startMouse: { x: e.clientX, y: e.clientY }, startPos, moved: false };
 
-    const onMove = (me) => {
-      const dx = me.clientX - dragState.current.startMouse.x;
-      const dy = me.clientY - dragState.current.startMouse.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) dragState.current.moved = true;
-      if (!dragState.current.moved) return;
-      setPositions(prev => ({ ...prev, ...Object.fromEntries(paths.map(p => [p, { x: startPos[p].x + dx, y: startPos[p].y + dy }])) }));
+    const newSelection = e.shiftKey 
+      ? new Set([...selected, path])
+      : selected.has(path) 
+        ? selected 
+        : new Set([path]);
+
+    setSelected(newSelection);
+
+    const paths = [...newSelection];
+    const startPositions = Object.fromEntries(
+      paths.map(p => [p, getPosition(p)])
+    );
+
+    dragState.current = {
+      paths,
+      startMouse: { x: e.clientX, y: e.clientY },
+      startPositions,
+      moved: false
     };
 
-    const onUp = (ue) => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+    const handleMove = (me) => {
+      const dx = me.clientX - dragState.current.startMouse.x;
+      const dy = me.clientY - dragState.current.startMouse.y;
+
+      if (Math.abs(dx) + Math.abs(dy) > 3) {
+        dragState.current.moved = true;
+      }
+
+      if (!dragState.current.moved) return;
+
+      setPositions(prev => ({
+        ...prev,
+        ...Object.fromEntries(
+          paths.map(p => [
+            p,
+            {
+              x: startPositions[p].x + dx,
+              y: startPositions[p].y + dy
+            }
+          ])
+        )
+      }));
+    };
+
+    const handleUp = (ue) => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+
       if (!dragState.current?.moved) return;
+
       const rect = ref.current?.getBoundingClientRect();
       if (!rect) return;
-      const dropX = ue.clientX - rect.left, dropY = ue.clientY - rect.top;
-      const target = entries.find(e => e.type === 'dir' && !paths.includes(e.path) && dropX >= e.x && dropX <= e.x + W && dropY >= e.y && dropY <= e.y + H);
+
+      const dropX = ue.clientX - rect.left;
+      const dropY = ue.clientY - rect.top;
+
+      const target = entries.find(e => {
+        if (e.type !== 'dir') return false;
+        if (paths.includes(e.path)) return false;
+        return dropX >= e.x && 
+               dropX <= e.x + ICON_WIDTH && 
+               dropY >= e.y && 
+               dropY <= e.y + ICON_HEIGHT;
+      });
+
       if (target) {
-        setFs(prev => {
-          let n = { ...prev };
+        saveFs(prev => {
+          let updated = { ...prev };
           paths.forEach(p => {
             const name = p.slice(root.length).replace(/\/$/, '');
-            const newPath = target.path + name + (prev[p]?.type === 'dir' ? '/' : '');
-            n = fsRename(n, p, newPath);
+            const isDir = prev[p]?.type === 'dir';
+            const newPath = target.path + name + (isDir ? '/' : '');
+            updated = fsRename(updated, p, newPath);
           });
-          return n;
+          return updated;
         });
-        setPositions(prev => { const n = { ...prev }; paths.forEach(p => delete n[p]); return n; });
+
+        setPositions(prev => {
+          const updated = { ...prev };
+          paths.forEach(p => delete updated[p]);
+          return updated;
+        });
+
         setSelected(new Set());
       }
+
       dragState.current = null;
     };
 
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
   };
 
-  const onBgMouseDown = (e) => {
+  const handleBackgroundMouseDown = (e) => {
     if (e.button !== 0) return;
+
     setMenu(null);
     if (!e.shiftKey) setSelected(new Set());
     setRenaming(null);
+
     const rect = ref.current.getBoundingClientRect();
-    const x0 = e.clientX - rect.left, y0 = e.clientY - rect.top;
+    const x0 = e.clientX - rect.left;
+    const y0 = e.clientY - rect.top;
+
     bandState.current = { x0, y0 };
 
-    const onMove = (me) => {
-      const x2 = me.clientX - rect.left, y2 = me.clientY - rect.top;
-      setBand({ x: Math.min(x0, x2), y: Math.min(y0, y2), w: Math.abs(x2 - x0), h: Math.abs(y2 - y0) });
-      const [minX, maxX, minY, maxY] = [Math.min(x0, x2), Math.max(x0, x2), Math.min(y0, y2), Math.max(y0, y2)];
-      const hit = new Set(entries.filter(en => en.x + W > minX && en.x < maxX && en.y + H > minY && en.y < maxY).map(en => en.path));
+    const handleMove = (me) => {
+      const x2 = me.clientX - rect.left;
+      const y2 = me.clientY - rect.top;
+
+      setBand({
+        x: Math.min(x0, x2),
+        y: Math.min(y0, y2),
+        w: Math.abs(x2 - x0),
+        h: Math.abs(y2 - y0)
+      });
+
+      const minX = Math.min(x0, x2);
+      const maxX = Math.max(x0, x2);
+      const minY = Math.min(y0, y2);
+      const maxY = Math.max(y0, y2);
+
+      const hit = new Set(
+        entries
+          .filter(en => 
+            en.x + ICON_WIDTH > minX && 
+            en.x < maxX && 
+            en.y + ICON_HEIGHT > minY && 
+            en.y < maxY
+          )
+          .map(en => en.path)
+      );
+
       setSelected(e.shiftKey ? new Set([...selected, ...hit]) : hit);
     };
 
-    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); setBand(null); };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    const handleUp = () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+      setBand(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
   };
 
   const deleteSelected = () => {
     if (onDelete) {
       [...selected].forEach(p => onDelete(p));
     } else {
-      setFs(prev => { 
-        let n = { ...prev }; 
-        [...selected].forEach(p => { n = fsDelete(n, p); }); 
-        localStorage.setItem('suprland-fs', JSON.stringify(n));
-        return n; 
+      saveFs(prev => {
+        let updated = { ...prev };
+        [...selected].forEach(p => {
+          updated = fsDelete(updated, p);
+        });
+        return updated;
       });
     }
-    setPositions(prev => { const n = { ...prev }; [...selected].forEach(p => delete n[p]); return n; });
+
+    setPositions(prev => {
+      const updated = { ...prev };
+      [...selected].forEach(p => delete updated[p]);
+      return updated;
+    });
+
     setSelected(new Set());
   };
 
-  const rename = (path, newName) => {
+  const renameFile = (path, newName) => {
     setRenaming(null);
-    if (!newName || newName === path.slice(root.length).replace(/\/$/, '')) return;
-    const newPath = root + newName + (fs[path]?.type === 'dir' ? '/' : '');
-    setFs(prev => {
-      const updated = fsRename(prev, path, newPath);
-      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+    if (!newName || newName === path.slice(root.length).replace(/\/$/, '')) {
+      return;
+    }
+
+    const isDir = fs[path]?.type === 'dir';
+    const newPath = root + newName + (isDir ? '/' : '');
+
+    saveFs(prev => fsRename(prev, path, newPath));
+
+    setPositions(prev => {
+      const updated = { ...prev };
+      updated[newPath] = updated[path];
+      delete updated[path];
       return updated;
     });
-    setPositions(prev => { const n = { ...prev }; n[newPath] = n[path]; delete n[path]; return n; });
+
     setSelected(new Set([newPath]));
   };
 
-  const doCopy = (paths) => { setClipboard({ paths: [...paths], op: 'copy' }); setMenu(null); };
-  const doCut = (paths) => { setClipboard({ paths: [...paths], op: 'cut' }); setMenu(null); };
+  const copyFiles = (paths) => {
+    setClipboard({ paths: [...paths], op: 'copy' });
+    setMenu(null);
+  };
 
-  const paste = () => {
+  const cutFiles = (paths) => {
+    setClipboard({ paths: [...paths], op: 'cut' });
+    setMenu(null);
+  };
+
+  const pasteFiles = () => {
     if (!clipboard) return;
-    setFs(prev => {
-      let n = { ...prev };
+
+    saveFs(prev => {
+      let updated = { ...prev };
+
       clipboard.paths.forEach(path => {
         const fullName = path.slice(root.length).replace(/\/$/, '');
         const isDir = prev[path]?.type === 'dir';
-        const ext = !isDir && fullName.includes('.') ? '.' + fullName.split('.').pop() : '';
-        const base = ext ? fullName.slice(0, fullName.length - ext.length) : fullName;
-        const dest = fsNextName(n, root, base, ext) + (isDir ? '/' : '');
-        n = fsCopy(n, path, dest);
-        if (clipboard.op === 'cut') n = fsDelete(n, path);
+        const ext = !isDir && fullName.includes('.') 
+          ? '.' + fullName.split('.').pop() 
+          : '';
+        const base = ext 
+          ? fullName.slice(0, fullName.length - ext.length) 
+          : fullName;
+        const dest = fsNextName(updated, root, base, ext) + (isDir ? '/' : '');
+
+        updated = fsCopy(updated, path, dest);
+
+        if (clipboard.op === 'cut') {
+          updated = fsDelete(updated, path);
+        }
       });
-      localStorage.setItem('suprland-fs', JSON.stringify(n));
-      return n;
+
+      return updated;
     });
+
     setClipboard(null);
     setMenu(null);
   };
 
   const openEntry = (entry) => {
-    if (entry.type === 'dir') { onOpenFolder?.(entry.path); return; }
-    if (entry.type === 'file') { setEditing(entry); return; }
+    if (entry.type === 'dir') {
+      onOpenFolder?.(entry.path);
+      return;
+    }
+
+    if (entry.type === 'file') {
+      setEditing({
+        path: entry.path,
+        name: entry.name,
+        text: entry.text || ''
+      });
+      return;
+    }
+
     setViewing(entry);
   };
 
+  const createNewFile = () => {
+    const newPath = fsNextName(fs, root, 'file', '.txt');
+    saveFs(p => ({ ...p, [newPath]: { type: 'file', text: '' } }));
+    setMenu(null);
+  };
+
+  const createNewFolder = () => {
+    const newPath = fsNextName(fs, root, 'folder') + '/';
+    saveFs(p => ({ ...p, [newPath]: { type: 'dir' } }));
+    setMenu(null);
+  };
+
+  const handleEditSave = (file) => {
+    saveFs(prev => ({
+      ...prev,
+      [file.path]: { type: 'file', text: file.text }
+    }));
+  };
+
   useEffect(() => {
-    const h = (e) => {
+    const handleKeyDown = (e) => {
       if (renaming || selected.size === 0) return;
+
       if (e.key === 'Delete') deleteSelected();
       if (e.key === 'F2' && selected.size === 1) setRenaming([...selected][0]);
-      if (e.ctrlKey && e.key === 'c') doCopy(selected);
-      if (e.ctrlKey && e.key === 'x') doCut(selected);
-      if (e.ctrlKey && e.key === 'v') paste();
+      if (e.ctrlKey && e.key === 'c') copyFiles(selected);
+      if (e.ctrlKey && e.key === 'x') cutFiles(selected);
+      if (e.ctrlKey && e.key === 'v') pasteFiles();
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selected, clipboard, fs, renaming]);
 
-  const newFile = () => { 
-    const newPath = fsNextName(fs, root, 'file', '.txt');
-    setFs(p => {
-      const updated = { ...p, [newPath]: { type: 'file', text: '' } };
-      localStorage.setItem('suprland-fs', JSON.stringify(updated));
-      return updated;
-    }); 
-    setMenu(null); 
-  };
-  const newFolder = () => { 
-    const newPath = fsNextName(fs, root, 'folder') + '/';
-    setFs(p => {
-      const updated = { ...p, [newPath]: { type: 'dir' } };
-      localStorage.setItem('suprland-fs', JSON.stringify(updated));
-      return updated;
-    }); 
-    setMenu(null); 
-  };
-
   return (
-    <div ref={ref} className="relative w-full h-full overflow-hidden select-none"
-      onMouseDown={onBgMouseDown}
-      onContextMenu={e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' }); }}>
+    <div 
+      ref={ref}
+      className="relative w-full h-full overflow-hidden select-none"
+      onMouseDown={handleBackgroundMouseDown}
+      onContextMenu={e => {
+        e.preventDefault();
+        setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' });
+      }}
+    >
+      {entries.map(entry => {
+        const isSelected = selected.has(entry.path);
 
-{entries.map(entry => {
-        const sel = selected.has(entry.path);
         return (
-          <div key={entry.path} className="absolute col items-center gap-1 cursor-pointer"
-            style={{ left: entry.x, top: entry.y, width: W, height: H, zIndex: sel ? 20 : 10 }}
-            onMouseDown={e => onIconMouseDown(e, entry.path)}
+          <div 
+            key={entry.path}
+            className="desktop-icon"
+            style={{ 
+              left: entry.x, 
+              top: entry.y, 
+              width: ICON_WIDTH, 
+              height: ICON_HEIGHT, 
+              zIndex: isSelected ? 20 : 10 
+            }}
+            onMouseDown={e => handleIconMouseDown(e, entry.path)}
             onDoubleClick={() => openEntry(entry)}
-            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); if (!sel) setSelected(new Set([entry.path])); setMenu({ x: e.clientX, y: e.clientY, kind: 'icon', path: entry.path }); }}>
-            <div className={`p-1.5 rounded-xl transition-colors ${sel ? 'bg-white/10' : 'hover:bg-white/5'}`}>
+            onContextMenu={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!isSelected) setSelected(new Set([entry.path]));
+              setMenu({ x: e.clientX, y: e.clientY, kind: 'icon', path: entry.path });
+            }}
+          >
+            <div className={isSelected ? 'desktop-icon-bg-selected' : 'desktop-icon-bg'}>
               {getIcon(entry, 36)}
             </div>
-            {renaming === entry.path
-              ? <RenameInput name={entry.name} onDone={name => rename(entry.path, name)} />
-              : <span className={`font-mono text-[9px] text-center break-all leading-tight px-1 rounded w-full ${sel ? 'bg-blue-900/40 text-gray-200' : 'text-gray-500'}`}>{entry.name}</span>}
+
+            {renaming === entry.path ? (
+              <RenameInput 
+                name={entry.name} 
+                onDone={name => renameFile(entry.path, name)} 
+              />
+            ) : (
+              <span className={isSelected ? 'desktop-icon-label-selected' : 'desktop-icon-label'}>
+                {entry.name}
+              </span>
+            )}
           </div>
         );
       })}
 
-      {band && <div className="absolute pointer-events-none rounded border border-blue-500/40 bg-blue-500/10" style={{ left: band.x, top: band.y, width: band.w, height: band.h, zIndex: 50 }} />}
+      {band && (
+        <div 
+          className="absolute pointer-events-none rounded border border-blue-500/40 bg-blue-500/10"
+          style={{ 
+            left: band.x, 
+            top: band.y, 
+            width: band.w, 
+            height: band.h, 
+            zIndex: 50 
+          }}
+        />
+      )}
 
-      {menu?.kind === 'bg' && <ContextMenu x={menu.x} y={menu.y} onNewFile={newFile} onNewFolder={newFolder} onPaste={clipboard ? paste : null} onClose={() => setMenu(null)} />}
+      {menu?.kind === 'bg' && (
+        <ContextMenu 
+          x={menu.x} 
+          y={menu.y}
+          onNewFile={createNewFile}
+          onNewFolder={createNewFolder}
+          onPaste={clipboard ? pasteFiles : null}
+          onClose={() => setMenu(null)}
+        />
+      )}
 
       {menu?.kind === 'icon' && (
-        <div className="fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden" style={glassMenu} onMouseDown={e => e.stopPropagation()}>
-          {[
-            { label: 'Open', fn: () => { openEntry(entries.find(e => e.path === menu.path)); setMenu(null); } },
-            { label: 'Edit', fn: () => { const entry = entries.find(e => e.path === menu.path); if (entry.type === 'file') { setEditing(entry); setMenu(null); } }, hide: entries.find(e => e.path === menu.path)?.type !== 'file' },
-            { label: 'Rename', fn: () => { setRenaming(menu.path); setMenu(null); }, hide: selected.size > 1 },
-            { label: 'Copy', fn: () => doCopy(selected) },
-            { label: 'Cut', fn: () => doCut(selected) },
-            { label: 'Delete', fn: () => { deleteSelected(); setMenu(null); }, danger: true },
-          ].filter(i => !i.hide).map(({ label, fn, danger }) => (
-            <button key={label} onClick={fn} className={`px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 ${danger ? 'text-red-400' : 'text-gray-400 hover:text-gray-200'}`}>{label}</button>
-          ))}
+        <div 
+          className="context-menu"
+          style={{ left: menu.x, top: menu.y, minWidth: 140 }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <button 
+            onClick={() => {
+              openEntry(entries.find(e => e.path === menu.path));
+              setMenu(null);
+            }}
+            className="context-menu-item"
+          >
+            Open
+          </button>
+
+          {entries.find(e => e.path === menu.path)?.type === 'file' && (
+            <button 
+              onClick={() => {
+                const entry = entries.find(e => e.path === menu.path);
+                setEditing({
+                  path: entry.path,
+                  name: entry.name,
+                  text: entry.text || ''
+                });
+                setMenu(null);
+              }}
+              className="context-menu-item"
+            >
+              Edit
+            </button>
+          )}
+
+          {selected.size === 1 && (
+            <button 
+              onClick={() => {
+                setRenaming(menu.path);
+                setMenu(null);
+              }}
+              className="context-menu-item"
+            >
+              Rename
+            </button>
+          )}
+
+          <button 
+            onClick={() => copyFiles(selected)}
+            className="context-menu-item"
+          >
+            Copy
+          </button>
+
+          <button 
+            onClick={() => cutFiles(selected)}
+            className="context-menu-item"
+          >
+            Cut
+          </button>
+
+          <button 
+            onClick={() => {
+              deleteSelected();
+              setMenu(null);
+            }}
+            className="context-menu-item-danger"
+          >
+            Delete
+          </button>
         </div>
       )}
 
-      <FileViewer file={viewing} onClose={() => setViewing(null)} />
+      <FileViewer 
+        file={viewing} 
+        onClose={() => setViewing(null)} 
+      />
 
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEditing(null)}>
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl w-[600px] h-[400px] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
-              <span className="font-mono text-sm text-gray-300">{editing.name}</span>
-              <button onClick={() => setEditing(null)} className="text-gray-500 hover:text-gray-300 transition-colors">✕</button>
-            </div>
-            <textarea
-              value={editing.text || ''}
-              onChange={e => setEditing({ ...editing, text: e.target.value })}
-              className="flex-1 bg-transparent text-gray-300 font-mono text-sm p-4 outline-none resize-none"
-              placeholder="Type here..."
-            />
-            <div className="flex gap-2 px-4 py-2 border-t border-gray-800">
-              <button
-                onClick={() => {
-                  setFs(prev => {
-                    const updated = { ...prev, [editing.path]: { type: 'file', text: editing.text } };
-                    localStorage.setItem('suprland-fs', JSON.stringify(updated));
-                    return updated;
-                  });
-                  setEditing(null);
-                }}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-mono text-xs transition-colors">
-                Save
-              </button>
-              <button
-                onClick={() => setEditing(null)}
-                className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg font-mono text-xs transition-colors">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TextEditor
+        file={editing}
+        onSave={handleEditSave}
+        onClose={() => setEditing(null)}
+      />
     </div>
   );
 }

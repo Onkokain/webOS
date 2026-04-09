@@ -12,14 +12,97 @@
     scrollbar-width: none;
   }
 
-  .row    { @apply flex items-center; }
-  .col    { @apply flex flex-col; }
+  .row { @apply flex items-center; }
+  .col { @apply flex flex-col; }
   .center { @apply flex items-center justify-center; }
 
-  .mono-xs  { @apply font-mono text-xs; }
+  .mono-xs { @apply font-mono text-xs; }
   .mono-tag { @apply font-mono text-[9px] uppercase tracking-widest; }
 
-  .menu-btn   { @apply flex items-center gap-2.5 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-white/5 font-mono text-xs transition-colors text-left; }
+  .menu-btn { @apply flex items-center gap-2.5 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-white/5 font-mono text-xs transition-colors text-left; }
   .prompt-btn { @apply px-4 py-1.5 rounded-xl font-mono text-xs transition-colors; }
-  .cam-bar    { @apply flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800; }
+  .cam-bar { @apply flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#0d0d0d] border-t border-gray-800; }
+
+  .glass-panel {
+    background: rgba(18, 18, 18, 0.92);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  .glass-taskbar {
+    background: rgba(20, 20, 20, 0.55);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .editor-modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/60;
+  }
+
+  .editor-container {
+    @apply bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl w-[600px] h-[400px] flex flex-col;
+  }
+
+  .editor-header {
+    @apply flex items-center justify-between px-4 py-2 border-b border-gray-800;
+  }
+
+  .editor-textarea {
+    @apply flex-1 bg-transparent text-gray-300 font-mono text-sm p-4 outline-none resize-none;
+  }
+
+  .editor-footer {
+    @apply flex gap-2 px-4 py-2 border-t border-gray-800;
+  }
+
+  .btn-primary {
+    @apply px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-mono text-xs transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg font-mono text-xs transition-colors;
+  }
+
+  .context-menu {
+    @apply fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden glass-panel;
+  }
+
+  .context-menu-item {
+    @apply px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 text-gray-400 hover:text-gray-200;
+  }
+
+  .context-menu-item-danger {
+    @apply px-4 py-2 mono-xs text-left transition-colors hover:bg-white/5 text-red-400;
+  }
+
+  .table-row {
+    @apply group text-gray-400 hover:text-gray-200 cursor-pointer transition-colors;
+  }
+
+  .table-row-selected {
+    @apply group text-gray-400 hover:text-gray-200 cursor-pointer transition-colors bg-blue-900/30;
+  }
+
+  .desktop-icon {
+    @apply absolute col items-center gap-1 cursor-pointer;
+  }
+
+  .desktop-icon-bg {
+    @apply p-1.5 rounded-xl transition-colors;
+  }
+
+  .desktop-icon-bg-selected {
+    @apply p-1.5 rounded-xl transition-colors bg-white/10;
+  }
+
+  .desktop-icon-label {
+    @apply font-mono text-[9px] text-center break-all leading-tight px-1 rounded w-full text-gray-500;
+  }
+
+  .desktop-icon-label-selected {
+    @apply font-mono text-[9px] text-center break-all leading-tight px-1 rounded w-full bg-blue-900/40 text-gray-200;
+  }
 }
