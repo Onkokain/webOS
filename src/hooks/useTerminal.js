@@ -57,3 +57,4 @@ export function useTerminal(user, fs, setFs, run, HOST) {
 
   return { input, setInput, history, shortCwd, submit, onKeyDown, bottomRef, inputRef };
 }
+    

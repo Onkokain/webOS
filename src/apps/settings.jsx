@@ -163,7 +163,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
               >
                 Reset User Data
               </button>
-              <p className="font-mono text-gray-700 text-[10px]">clears saved user and files, returns to login</p>
+              <p className="font-mono text-gray-700 text-[10px]">Clears saved user and files, returns to login</p>
             </div>
           )}
 
