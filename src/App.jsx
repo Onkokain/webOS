@@ -54,6 +54,11 @@ export default function App() {
   const dragTile = useRef(null);
   const screenRef = useRef(null);
 
+  const longPressTimer=useRef(null);
+  const verylongPressTimer=useRef(null);
+
+  const [isDragging,setIsDragging]=useState(false);
+
   const handleLogin = (user) => {
     const initialFs = { '/home/': { type: 'dir' }, [`/home/${user}/`]: { type: 'dir' } };
     setFs(initialFs);
@@ -308,6 +313,90 @@ export default function App() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   };
+
+  const onTileHeaderTouchHold =(event, windowId) => {
+    const touch=event.touches[0];
+
+    longPressTimer.current=setTimeout(()=>{
+      setIsDragging(true);
+      setDraggingId(windowId);
+      setDragPos({
+        x:touch.clientX,
+        y:touch.clientY
+
+      });
+    },2000)
+
+    const handleTouchMovement =(moveEvent) => {
+      if (!isDragging) {
+        clearTimeout(longPressTimer.current);
+        return;
+      }
+
+         const moveTouch=moveEvent.touches[0];
+    setDragPos({
+      x:moveTouch.clientX,
+      y:moveTouch.clientY
+    })
+    const screenRect = screenRef.current?.getBoundingClientRect();
+  
+      if (!screenRect) {return};
+      
+      const cursorXPercent = ((moveEvent.clientX - screenRect.left) / screenRect.width) * 100;
+      const cursorYPercent = ((moveEvent.clientY - screenRect.top) / screenRect.height) * 100;
+      
+      const allLeaves = collectLeaves(tree, BOUNDS, null);
+      const hoveredWindow = allLeaves.find(leaf =>
+        leaf.id !== windowId &&
+        cursorXPercent >= leaf.bounds.x &&
+        cursorXPercent <= leaf.bounds.x + leaf.bounds.w &&
+        cursorYPercent >= leaf.bounds.y &&
+        cursorYPercent <= leaf.bounds.y + leaf.bounds.h
+      );
+      
+      setDragOverId(hoveredWindow?.id ?? null);
+    };
+    
+    const handle_touch_over = (upEvent) => {
+      clearTimeout(longPressTimer.current);
+
+      const screenRect = screenRef.current?.getBoundingClientRect();
+      const touch=upEvent.changedTouches[0];
+
+      if (screenRect) {
+        const dropXPercent = ((touch.clientX - screenRect.left) / screenRect.width) * 100;
+        const dropYPercent = ((touch.clientY - screenRect.top) / screenRect.height) * 100;
+
+        const allLeaves = collectLeaves(tree, BOUNDS, null);
+        const targetWindow = allLeaves.find(leaf =>
+          leaf.id !== windowId &&
+          dropXPercent >= leaf.bounds.x &&
+          dropXPercent <= leaf.bounds.x + leaf.bounds.w &&
+          dropYPercent >= leaf.bounds.y &&
+          dropYPercent <= leaf.bounds.y + leaf.bounds.h
+        );
+      
+        if (targetWindow) {
+          setTree(prev => swapIds(prev, windowId, targetWindow.id));
+          setActiveId(windowId);
+        }
+      }
+
+      window.removeEventListener('touchmove', handleTouchMovement);
+      window.removeEventListener('touchend', handle_touch_over);
+      
+      setDragOverId(null);
+      setDragPos(null);
+      setDraggingId(null);
+      setIsDragging(false);
+    };
+    
+    window.addEventListener('touchmove', handleTouchMovement);
+    window.addEventListener('touchend', handle_touch_over);
+  }
+    
+
+
 
   const onFloatHeaderMouseDown = (event, windowId) => {
     const isLeftClick = event.button === 0;
@@ -585,6 +674,10 @@ export default function App() {
                 onMouseDown={e => {
                   if (e.button === 1) { e.preventDefault(); closeWindow(id); }
                   else { setActiveId(id); onTileHeaderMouseDown(e, id); }
+                }}
+                onTouchStart={e => {
+                    setActiveId(id);
+                    onTileHeaderTouchHold(e,id);
                 }}
                 className="absolute p-1"
                 style={{
