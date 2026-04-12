@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Window from '../ui/window';
 
 export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
-  const defaultUrl = initialUrl ?? 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  const defaultUrl = initialUrl ?? 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // this is either a rick roll or heavenly jumpstyle i forgot which
   const [input, setInput] = useState(defaultUrl);
   const [url, setUrl] = useState(defaultUrl);
 
@@ -10,9 +10,9 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
     event.preventDefault();
     
     let targetUrl = input.trim();
-    const hasProtocol = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
+    const httpcheck = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
     
-    if (!hasProtocol) {
+    if (!httpcheck) {
       targetUrl = 'https://' + targetUrl;
     }
     
