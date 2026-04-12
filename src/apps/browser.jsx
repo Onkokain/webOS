@@ -28,8 +28,8 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
           value={input}
           onChange={event => setInput(event.target.value)}
           className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-gray-300 font-mono text-xs outline-none focus:border-gray-500 transition-colors"
-          spellCheck="false"
-          autoComplete="off"
+          spellCheck="false" // removes the ugly red lines
+          autoComplete="off" // idk why i added this idt it even auto completes on
         />
         <button type="submit" className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1">→</button>
       </form>

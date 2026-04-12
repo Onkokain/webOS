@@ -1,7 +1,6 @@
 import { useEffect, useState,useRef } from "react";
 import Window from '../ui/window';
 import {fsDelete} from '../utils/fsUtils';
-
 const HOST='Suprland';
 
 const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory, filesystem, setFilesystem) => {
@@ -168,7 +167,8 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             return lines;
         }
 
-        case 'hackertype': {
+        case 'hackertype':
+            case 'hacktype': {
             return ['__HACKERTYPE__'];
         }
 
@@ -252,11 +252,14 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
 
     const submit=(e) => {
         e.preventDefault();
+        if (hackerActive) return;
         const cmd=input.trim();
         if (!cmd) return;
         const out=run(cmd,user,cwd,setCwd,fs,setFs);
+
         if (out[0]==='__CLEAR__') {
-            setHistory([]);
+            setHistory([BOOT(user)[0],BOOT(user)[1],BOOT(user)[2]]);
+            
         }
         else if (out[0]==='__HISTORY__') {
             setHistory((h) => [...h,
@@ -270,14 +273,37 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
             setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}]);
             setOutputColor('text-green-400');
             setHackerActive(true);
-            const chars = `abcdefghijklmnopqrst uvwxyz01 23456789!@#$%^&*(){}[]<>/\\|=+-_`;
-            const lines = Array.from({length: 4000}, () => Array.from({length: Math.floor(Math.random()*60+20)}, () => chars[Math.floor(Math.random()*chars.length)]).join(''));
-            let i = 0;
-            hackerRef.current = setInterval(() => {
-                if (i >= lines.length) { clearInterval(hackerRef.current); setHackerActive(false); return; }
-                setHistory(h => [...h, {k: 'out', t: lines[i++]}]);
-                scrollBottom();
-            }, 50);
+            setHistory(h=> [...h,{k:'dim', t:'Hackertype started!'},{k:'dim', t:'Press Esc to end.'}])
+            fetch('/webOS/hackertype.txt').then(res => res.text()).then(text => {
+                let i=0;
+                const handler=(e) => {
+                    if (e.key==='Escape') {
+                        document.removeEventListener('keydown', handler);
+                        setHackerActive(false);
+                        return;
+                    }
+
+                    if (i>=text.length) i=0;
+                    const char=text.slice(i,i+8);
+                    i+=8;
+                    setHistory(h=> {
+                        const last=h[h.length-1];
+                        if (char.includes('\n')) {
+                            return [...h, {k:'out',t: char.replace('\n','')}]
+                        }
+                        if (last?.k==='out') 
+                            return [...h.slice(0,-1), {k:'out',t: last.t+char}];
+                        return [...h, {k:'out',t: char}]
+                        
+                    })
+                    scrollBottom();
+
+                }
+                hackerRef.current=handler
+                document.addEventListener('keydown', handler);
+            })
+                
+            
         }
         else if (out[0]?.startsWith('__BROWSER__:')) {
             const url = out[0].slice('__BROWSER__:'.length);
@@ -305,7 +331,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
 
     const onKeyDown=(e) => {
         if (e.ctrlKey && e.key === 'c' || e.key === 'Escape') {
-            if (hackerActive) { clearInterval(hackerRef.current); setHackerActive(false); setHistory(h => [...h, {k:'out', t:'^C'}]); }
+            if (hackerActive) { clearInterval(hackerRef.current); setHackerActive(false); setHistory(h => [...h, {k:'dim', t:'Hackertype ended!'}]); }
             return;
         }
         if (e.key === 'ArrowUp') {
@@ -318,7 +344,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
             e.preventDefault();
             const i=Math.max(histIdx-1,-1);
             setHistIdx(i);
-            setInput(i===-1 ? '' : cmdHistory[i]);
+            if (i === -1) {
+                setInput('');
+            } else {
+                setInput(cmdHistory[i]);
+            }
         }
     };
 
@@ -340,7 +370,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
                 <span className="text-gray-500">:{shortCwd}$</span>
                 </span>
                 <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
-                value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={onKeyDown}
+                value={input}
+                 onChange={(e) => setInput(e.target.value)} 
+                 onKeyDown={onKeyDown}
+                 readOnly={hackerActive}
                 className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0 text-[clamp(0.65rem,4cqw,0.8rem)]"
                 spellCheck="false" autoComplete="off" />
             </form>
