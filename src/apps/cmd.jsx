@@ -180,9 +180,12 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             return [`__COLOR__:${commandArguments}`];
         }
 
-        case 'size': {
+        case 'size':
+            case 'fontsize': {
             if (!commandArguments) return ['usage: size <font size in px (default:14)>'];
             if (isNaN(commandArguments)) return ['Invalid size. Enter a number!'];
+            if (commandArguments<7 || commandArguments>67) return ['Invalid size. Font Size can only be in the range [7,67]!'];
+
             return [`__SIZE__:${commandArguments}`];
         }
 
