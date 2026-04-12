@@ -24,8 +24,12 @@ export default function Window({ id, title, focused, onFocus, onClose, children 
             className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors"
             type="button"
           />
-          <span className="h-3 w-3 rounded-full bg-yellow-400" />
-          <span className="h-3 w-3 rounded-full bg-green-500" />
+          <span className="h-3 w-3 rounded-full bg-yellow-400"
+          onClick={handleCloseClick}
+           />
+          <span className="h-3 w-3 rounded-full bg-green-500" 
+          onClick={handleCloseClick}
+          />
         </div>
         <span
           className="text-gray-400 font-mono truncate ml-2"

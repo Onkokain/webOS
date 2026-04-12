@@ -190,8 +190,7 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
         }
 
         case 'kill': {
-            if (!commandArguments) return ['usage: kill <pid>', 'use ps to list processes'];
-            return [`kill: ${commandArguments}: no such process`];
+            return ['__CLOSE__']
         }
 
         case 'env': {
@@ -333,6 +332,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
             setFontSize(size);
             setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}, {k: 'out', t: `font size set to ${size}`}]);
         }
+
+        else if (out[0]==='__CLOSE__') {
+            onClose();
+        }
         else {
             setHistory((h) => [...h,
                 {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`},
@@ -378,7 +381,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
               onFocus={onFocus}
                onClose={onClose}
                >
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll]"
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-1 font-mono hide-scroll"
                 style={{fontSize}}
                 onClick={() => inputRef.current?.focus()}>
                 {history.map((l, i) => (

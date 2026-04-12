@@ -199,8 +199,9 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
       <div 
         className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
         onContextMenu={e => {
+          const rect = e.currentTarget.getBoundingClientRect();
           e.preventDefault();
-          setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' });
+          setMenu({ x: e.clientX-rect.left, y: e.clientY-rect.top, kind: 'bg' });
         }}
         onClick={() => setSelected(new Set())}
       >
@@ -248,8 +249,9 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
                       onContextMenu={e => {
                         e.preventDefault();
                         e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
                         if (!isSelected) setSelected(new Set([path]));
-                        setMenu({ x: e.clientX, y: e.clientY, kind: 'item' });
+                        setMenu({ x: e.clientX-rect.left, y: e.clientY-rect.top, kind: 'item' });
                       }}
                       className={isSelected ? 'table-row-selected' : 'table-row'}
                     >

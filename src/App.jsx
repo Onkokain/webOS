@@ -14,7 +14,7 @@ import Settings from './apps/settings';
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
-const SINGLE_WINDOW = ['camera', 'help', 'settings'];
+const SINGLE_WINDOW = ['camera', 'help', 'settings', 'files'];
 
 // swaps two apps; hold left click and drag a window over another to swap positions
 function swapIds(node, idA, idB) {
@@ -614,7 +614,7 @@ export default function App() {
                 style={{ left: floatWin.x, top: floatWin.y, width: floatWin.w, height: floatWin.h, zIndex: isActive ? 50 : 30 }}>
                 <div className="w-full h-full relative">
                   {renderById(id, isActive)}
-                  <div className="absolute top-0 left-0 right-0 h-8 cursor-move z-10"
+                  <div className="absolute top-0 left-10 right-0 h-8 cursor-move z-10"
                     onMouseDown={e => onFloatHeaderMouseDown(e, id)} />
                   <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"
                     onMouseDown={e => onFloatResize(e, id)} />
