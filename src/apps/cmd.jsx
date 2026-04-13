@@ -59,9 +59,7 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
       '  cat <file>         :   print file contents',
       '  rm <path>          :   delete file or directory',
       '  history            :   show command history',
-      '  cal                :   print current month calendar',
       '  env                :   print environment variables',
-      '  color <color>      :   change text color',
       '                         (green|cyan|white|yellow|red|reset)',
       '  browser <url>      :   open url in browser',
       '  hackertype         :   type like a hacker',
@@ -152,33 +150,14 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             return ['__HISTORY__'];
         }
 
-        case 'cal': {
-            const now = new Date();
-            const y = now.getFullYear(), m = now.getMonth();
-            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            const first = new Date(y, m, 1).getDay();
-            const days = new Date(y, m + 1, 0).getDate();
-            const lines = [`   ${months[m]} ${y}`, 'Su Mo Tu We Th Fr Sa'];
-            let row = '   '.repeat(first);
-            for (let d = 1; d <= days; d++) {
-                row += String(d).padStart(2) + ' ';
-                if ((first + d) % 7 === 0) { lines.push(row.trimEnd()); row = ''; }
-            }
-            if (row.trim()) lines.push(row.trimEnd());
-            return lines;
-        }
+
 
         case 'hackertype':
             case 'hacktype': {
             return ['__HACKERTYPE__'];
         }
 
-        case 'color': {
-            if (!commandArguments) return ['usage: color <green|cyan|white|yellow|red|reset>'];
-            const valid = ['green','cyan','white','yellow','red','reset'];
-            if (!valid.includes(commandArguments)) return [`color: invalid color. choose: ${valid.join(', ')}`];
-            return [`__COLOR__:${commandArguments}`];
-        }
+
 
         case 'size':
             case 'fontsize': {
@@ -235,7 +214,7 @@ const BOOT= (user) => [
     {k: 'dim', t:'-'.repeat(44)},
 ];
 
-export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}) {
+export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,settings}) {
     const [fontSize,setFontSize]=useState(14);
     const root=`/home/${user}/`;
     const [input,setInput]=useState('');
@@ -320,12 +299,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
             onOpenApp?.('browser', url);
             setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}, {k: 'out', t: `launching browser → ${url}`}]);
         }
-        else if (out[0]?.startsWith('__COLOR__:')) {
-            const color = out[0].split(':')[1];
-            const colorMap = { green:'text-green-400', cyan:'text-cyan-400', white:'text-white', yellow:'text-yellow-400', red:'text-red-400', reset:'text-gray-300' };
-            setOutputColor(colorMap[color] ?? 'text-gray-300');
-            setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}, {k: 'out', t: `color set to ${color}`}]);
-        }
+
 
         else if (out[0]?.startsWith('__SIZE__:')) {
             const size = out[0].split(':')[1] + 'px';
@@ -385,7 +359,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
                 style={{fontSize}}
                 onClick={() => inputRef.current?.focus()}>
                 {history.map((l, i) => (
-                <div key={i} className={l.k === 'prompt' ? 'text-green-400' : l.k === 'dim' ? 'text-gray-600' : outputColor}>{l.t}</div>
+<div key={i} style={{color: settings?.textColor || 'white'}}>{l.t}</div>
+
+
+
+
                 ))}
                 <div ref={bottomRef} />
             </div>
@@ -393,10 +371,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp}
                 <span className="font-mono whitespace-nowrap "
                 style={{fontSize}}
              >
-                <span className="text-cyan-500">{user}</span>
-                <span className="text-gray-600">@</span>
-                <span className="text-purple-400">{HOST}</span>
-                <span className="text-gray-500">:{shortCwd}$</span>
+                <span>{user}</span>
+                <span>@</span>
+                <span>{HOST}</span>
+                <span>:{shortCwd}$</span>
                 </span>
                 <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
                 value={input}

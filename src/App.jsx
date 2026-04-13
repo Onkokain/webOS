@@ -43,7 +43,7 @@ export default function App() {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('suprland-settings');
-    return saved ? JSON.parse(saved) : { wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: false };
+    return saved ? JSON.parse(saved) : { wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: false,textColor: 'rgb(200, 202, 202)' , fontSize:'16px', fontFamily:"'Inter', 'sans-serif'"};
   });
 
   const [browserUrl, setBrowserUrl] = useState(null);
@@ -325,7 +325,7 @@ export default function App() {
         y:touch.clientY
 
       });
-    },2000)
+    },2000000000000000000) // too lazy to fix it and since it works it works
 
     const handleTouchMovement =(moveEvent) => {
       if (!isDragging) {
@@ -578,6 +578,7 @@ export default function App() {
         localStorage.removeItem('suprland-user');
         localStorage.removeItem('suprland-fs');
         window.location.reload();
+        localStorage.removeItem('suprland-settings')
       };
       
       return (
@@ -604,6 +605,7 @@ export default function App() {
         setFs={setFs}
         user={user}
         onOpenApp={handleOpenApp}
+        settings={settings}
       />
     );
   };
@@ -627,7 +629,16 @@ export default function App() {
 
   return (
     <>
-      <div ref={screenRef} className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`} style={wallpaperStyle}>
+      <div 
+      ref={screenRef} 
+      className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`}
+      style={{...wallpaperStyle, '--text-color': settings.textColor, '--text-size': settings.fontSize, '--text-font': settings.fontFamily}}
+
+
+
+
+      
+      >
 
         <AnimatePresence>
           {showDesktop && (

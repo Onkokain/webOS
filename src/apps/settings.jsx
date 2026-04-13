@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Window from '../ui/window';
-
+import CuteButton from '../utils/cutebutton';
+import { text } from 'motion/react-client';
 const ALL_APPS = ['cli', 'notepad', 'camera', 'help', 'files', 'browser', 'settings'];
 
 const BASE = import.meta.env.BASE_URL;
@@ -26,7 +27,7 @@ const POSITIONS = ['bottom', 'top', 'left', 'right'];
 export default function Settings({ id, focused, onFocus, onClose, settings, onSettings, onResetUser }) {
   const [tab, setTab] = useState('wallpaper');
 
-  const tabs = ['wallpaper', 'taskbar', 'system'];
+  const tabs = ['wallpaper', 'taskbar', 'Personalize','system'];
 
   return (
     <Window id={id} title="settings" focused={focused} onFocus={onFocus} onClose={onClose}>
@@ -51,7 +52,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
 
           {tab === 'wallpaper' && (
             <div className="flex flex-col gap-3">
-              <p className="font-mono text-gray-500 text-[10px] tracking-widest uppercase">Wallpaper</p>
+              <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">Wallpaper</p>
               <div className="grid grid-cols-3 gap-2">
                 {WALLPAPERS.map(wallpaper => (
                   <button
@@ -88,7 +89,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
           {tab === 'taskbar' && (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <p className="font-mono text-gray-500 text-[10px] tracking-widest uppercase">Visible Apps</p>
+                <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">Visible Apps</p>
                 {ALL_APPS.map(appKind => (
                   <label key={appKind} className="flex items-center gap-3 cursor-pointer group">
                     <div
@@ -156,7 +157,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
 
           {tab === 'system' && (
             <div className="flex flex-col gap-3">
-              <p className="font-mono text-gray-500 text-[10px] tracking-widest uppercase">System</p>
+              <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">System</p>
               <button
                 onClick={onResetUser}
                 className="py-2 rounded-lg border border-red-900 text-red-500 hover:bg-red-900/20 font-mono text-xs transition-colors"
@@ -167,6 +168,77 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
             </div>
           )}
 
+          {tab === 'Personalize' && (
+            <div className="flex flex-col gap-3">
+              <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">Personalize</p>
+              <div className='flex gap-20 py-10'> 
+            <div className='flex-col flex'> 
+              <p className="font-mono text-gray-500 text-[12px] tracking-widest uppercase hover:scale-110 hover:text-white">Font Size  </p>
+              <CuteButton  text={'07'} onclick={() => onSettings({...settings, fontSize: '07px'})} />
+              <CuteButton  text={'10'} onclick={() => onSettings({...settings, fontSize: '10px'})} />
+              <CuteButton  text={'13'} onclick={() => onSettings({...settings, fontSize: '13px'})} />
+              <CuteButton  text={'17'} onclick={() => onSettings({...settings, fontSize: '17px'})} />
+              <CuteButton  text={'21'} onclick={() => onSettings({...settings, fontSize: '21px'})} />
+              <CuteButton  text={'32'} onclick={() => onSettings({...settings, fontSize: '32px'})} />
+              <CuteButton  text={'default'} onclick={() => onSettings({...settings, fontSize: '16px'})} />
+
+            </div>
+
+              
+           
+            <div className='flex-col flex'> 
+              <p className="font-mono text-gray-500 text-[12px] tracking-widest uppercase hover:scale-110 hover:text-white">Font Color  </p>
+              <CuteButton  text={'red'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(248, 113, 113)'
+              })
+
+              }/>
+              <CuteButton  text={'blue'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(0, 217, 255)'
+              })
+
+              }/>
+              <CuteButton  text={'green'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(0, 255, 136)'
+              })}/>
+              <CuteButton  text={'yellow'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(255, 215, 0)'
+              })}/>
+              <CuteButton  text={'purple'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(218, 112, 214)'
+              })}/>
+              <CuteButton  text={'orange'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(255, 140, 66)'
+              })}/>
+              <CuteButton  text={'default'} onclick={()=>onSettings({
+                ...settings,
+                textColor:'rgb(200, 202, 202)'
+              })}/>
+
+            </div>            <div className='flex-col flex'> 
+              <p className="font-mono text-gray-500 text-[12px] tracking-widest uppercase hover:scale-110 hover:text-white">Font Style  </p>
+              <CuteButton  text={'mono'} onclick={() => onSettings({...settings, fontFamily: 'monospace'})} />
+              <CuteButton  text={'sans'} onclick={() => onSettings({...settings, fontFamily: 'sans-serif'})} />
+              <CuteButton  text={'serif'} onclick={() => onSettings({...settings, fontFamily: 'serif'})} />
+              <CuteButton  text={'cursive'} onclick={() => onSettings({...settings, fontFamily: 'cursive'})} />
+              <CuteButton  text={'fantasy'} onclick={() => onSettings({...settings, fontFamily: 'fantasy'})} />
+              <CuteButton  text={'hacker'} onclick={() => onSettings({...settings, fontFamily: 'Saira Stencil'})} />
+              <CuteButton  text={'default'} onclick={() => onSettings({...settings, fontFamily:'sans-serif'})} />
+
+              
+
+            </div>
+              </div>
+                        
+
+            </div>
+          )}
         </div>
       </div>
     </Window>
