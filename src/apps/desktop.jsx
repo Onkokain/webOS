@@ -9,6 +9,35 @@ import { fsDelete, fsRename, fsCopy, fsNextName } from '../utils/fsUtils';
 const ICON_WIDTH = 72;
 const ICON_HEIGHT = 84;
 
+const E_IMAGE= new Set(['png','jpg','jpeg','gif','bmp','webp']);
+const E_VIDEO= new Set(['mp4','webm','ogg']);
+const E_AUDIO= new Set(['mp3','wav','ogg']); 
+
+const getFileExtension =(name = '') => {
+  const idx=name.lastIndexOf('.');
+  if(idx===-1) return '';
+  return name.slice(idx+1).toLowerCase();
+}
+
+const MediaKind = (e) => {
+  if (e.kind === 'photo' || e.kind === 'video' || e.kind === 'audio') {
+    return e.kind;
+  }
+  
+  const ext = getFileExtension(e.name);
+  if(E_IMAGE.has(ext)) return 'photo';
+  if(E_VIDEO.has(ext)) return 'video';
+  if(E_AUDIO.has(ext)) return 'audio';
+  return null;
+}
+
+const isEditable = (e) => {
+  if (!e || e.type!=='file') return false;
+  if (MediaKind(e)) return false;
+  return true;
+}
+
+
 function getAutoPosition(index) {
   return {
     x: 16 + Math.floor(index / 9) * (ICON_WIDTH + 20),
@@ -324,17 +353,22 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
       onOpenFolder?.(entry.path);
       return;
     }
-
-    if (entry.type === 'file') {
-      setEditing({
-        path: entry.path,
-        name: entry.name,
-        text: entry.text || ''
-      });
+    if (entry.type!=='file') {
+      setViewing(entry);
       return;
     }
 
-    setViewing(entry);
+    const mediaKind = MediaKind(entry);
+    if (mediaKind) {
+      setViewing({...entry,kind: mediaKind});
+      return;
+    }
+
+    setEditing({
+      path:entry.path,
+      name:entry.name,
+      text: entry.text || '',
+    })
   };
 
   const createNewFile = () => {
@@ -352,7 +386,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
   const handleEditSave = (file) => {
     saveFs(prev => ({
       ...prev,
-      [file.path]: { type: 'file', text: file.text }
+      [file.path]: {...prev[file.path], type: 'file', text: file.text }
     }));
   };
 
@@ -477,7 +511,7 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
             Open
           </button>
 
-          {entries.find(e => e.path === menu.path)?.type === 'file' && (
+          {isEditable(entries.find(e => e.path === menu.path)) && (
             <button 
               onClick={() => {
                 const entry = entries.find(e => e.path === menu.path);

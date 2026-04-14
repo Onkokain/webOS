@@ -8,11 +8,6 @@ const BASE = import.meta.env.BASE_URL;
 
 const WALLPAPERS = [
   { label: 'Black', value: 'color:bg-black', preview: null },
-  { label: 'Dark Gray', value: 'color:bg-gray-950', preview: null },
-  { label: 'Deep Blue', value: 'color:bg-[#020818]', preview: null },
-  { label: 'Deep Purple', value: 'color:bg-[#0d0010]', preview: null },
-  { label: 'Dark Green', value: 'color:bg-[#001a0d]', preview: null },
-  { label: 'Dark Red', value: 'color:bg-[#1a0000]', preview: null },
   { label: 'Ocean', value: `img:${BASE}wallpapers/adrien-olichon-RCAhiGJsUUE-unsplash.jpg`, preview: null },
   { label: 'Twilight', value: `img:${BASE}wallpapers/boicu-andrei-LgJsrwAYU8k-unsplash.jpg`, preview: null },
   { label: 'Desert', value: `img:${BASE}wallpapers/clay-banks-TQYTWfN1b7M-unsplash.jpg`, preview: null },
@@ -20,6 +15,8 @@ const WALLPAPERS = [
   { label: 'Autumn', value: `img:${BASE}wallpapers/fairuz-isni-CoWsg5McHac-unsplash.jpg`, preview: null },
   { label: 'Beach', value: `img:${BASE}wallpapers/samuel-sng-MNzVgkiJk9Q-unsplash.jpg`, preview: null },
   { label: 'Abstract', value: `img:${BASE}wallpapers/sebastian-svenson-d2w-_1LJioQ-unsplash.jpg`, preview: null },
+  { label: 'Anime', value: `img:${BASE}wallpapers/anime.jpg`, preview: null },
+  { label: 'Valley', value: `img:${BASE}wallpapers/valley.jpg`, preview: null },
 ];
 
 const POSITIONS = ['bottom', 'top', 'left', 'right'];

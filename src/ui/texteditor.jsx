@@ -1,8 +1,20 @@
+import { useEffect,useState } from "react";
+
+
 export default function TextEditor({ file, onSave, onClose }) {
+  const [draft,setdraft] = useState('');
+
+  useEffect(()=> {
+    if (file) {
+      setdraft(file.text || '');
+    }
+  },[file?.path,file?.text])
+
+
   if (!file) return null;
 
   const handleSaveClick = () => {
-    onSave(file);
+    onSave({...file,text:draft});
     onClose();
   };
 
@@ -28,8 +40,8 @@ export default function TextEditor({ file, onSave, onClose }) {
         </div>
 
         <textarea
-          value={file.text}
-          onChange={event => file.text = event.target.value}
+          value={draft}
+          onChange={event => setdraft(event.target.value)}
           className="editor-textarea"
           placeholder="Type here..."
           autoFocus

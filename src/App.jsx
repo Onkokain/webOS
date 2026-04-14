@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, transform } from "framer-motion";
 import { createLeaf, countLeaves, getFirstLeafId, getLeafDepth, splitNode, removeNode, collectLeaves } from './utils/tree';
 import Cli from './apps/cmd';
 import Notepad from './apps/notepad';
@@ -28,6 +28,11 @@ function swapIds(node, idA, idB) {
 }
 
 export default function App() {
+  const [wpoffset,setWpoffset]=useState({x:50,y:50});
+  const [wppan,setWppan]=useState(false);
+  const panref=useRef(null);
+
+
   const [user, setUser] = useState(() => localStorage.getItem('suprland-user')); // username is saved to localstorage
   const [tree, setTree] = useState(null);
   const [activeId, setActiveId] = useState(null);
@@ -53,6 +58,7 @@ export default function App() {
   const [draggingId, setDraggingId] = useState(null);
   const dragTile = useRef(null);
   const screenRef = useRef(null);
+  
 
   const longPressTimer=useRef(null);
   const verylongPressTimer=useRef(null);
@@ -325,7 +331,7 @@ export default function App() {
         y:touch.clientY
 
       });
-    },2000000000000000000) // too lazy to fix it and since it works it works
+    },2000) // too lazy to fix it and since it works it works
 
     const handleTouchMovement =(moveEvent) => {
       if (!isDragging) {
@@ -464,6 +470,39 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('suprland-settings', JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+      if (!wppan) return;
+
+      const onMove=(e)=> {
+        if (!panref.current) return;
+
+        const dx=e.clientX-panref.current.startX;
+        const dy=e.clientY-panref.current.startY;
+        const speed=0.09;
+
+        setWpoffset({
+          x:clamp(panref.current.origX-dx*speed,0,100),
+          y:clamp(panref.current.origY-dy*speed,0,100),
+        })
+      }
+
+      const onUp=() => {
+        setWppan(false);
+        panref.current=null
+      }
+
+      window.addEventListener('mousemove',onMove);
+      window.addEventListener('mouseup',onUp);
+
+      return () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+
+      }
+
+
+  },[wppan])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -655,7 +694,33 @@ export default function App() {
 
   const isImgWallpaper = settings.wallpaper.startsWith('img:');
   const wallpaperClass = isImgWallpaper ? 'bg-black' : settings.wallpaper.replace('color:', '');
-  const wallpaperStyle = isImgWallpaper ? { backgroundImage: `url(${settings.wallpaper.replace('img:', '')})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {};
+
+
+  const clamp=(value,min,max)=> Math.min(Math.max(value,min),max);
+
+  const startpan=(e)=> {
+    if (!isImgWallpaper || e.button!==1){ return;}
+    e.preventDefault();
+    setWppan(true);
+
+    panref.current= {
+      startX:e.clientX,
+      startY:e.clientY,
+      origX:wpoffset.x,
+      origY:wpoffset.y,
+    }
+
+  }
+  const wallpaperStyle = isImgWallpaper ? {
+    backgroundImage: `url(${settings.wallpaper.replace('img:', '')})`,
+    backgroundSize: 'auto 120%', 
+    backgroundPosition: `${wpoffset.x}% ${wpoffset.y}%`,
+    backgroundRepeat: 'no-repeat',
+    cursor: wppan ? 'grabbing' : 'default',
+    transform: wppan ? 'scale(1.02)' : 'none',
+    transformOrigin: 'center,center',
+    transition: 'transform 250ms ease'
+    } : {};
 
   if (!user) return <Login onLogin={handleLogin} />;
 
@@ -674,6 +739,10 @@ export default function App() {
     <>
       <div 
       ref={screenRef} 
+      onMouseDown={startpan}
+      onAuxClick={(e)=> {
+        if (e.button===1) e.preventDefault();
+      }}
       className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`}
       style={{...wallpaperStyle, '--text-color': settings.textColor, '--text-size': settings.fontSize, '--text-font': settings.fontFamily}}
 
