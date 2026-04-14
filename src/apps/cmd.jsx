@@ -194,6 +194,10 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
         case 'cls': {
             return ['__CLEAR__'];
         }
+        case 'reset': {
+            if (!commandArguments || commandArguments !== 'confirm')  return ['This will reset all user data. Type "reset confirm" to proceed.'];
+            return ['__RESET__']
+        }
 
         case 'sudo': {
             return ['nice try but it ain\'t happening'];
@@ -214,7 +218,7 @@ const BOOT= (user) => [
     {k: 'dim', t:'-'.repeat(44)},
 ];
 
-export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,settings}) {
+export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,settings,reset}) {
     const [fontSize,setFontSize]=useState(14);
     const root=`/home/${user}/`;
     const [input,setInput]=useState('');
@@ -310,6 +314,9 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
         else if (out[0]==='__CLOSE__') {
             onClose();
         }
+        else if (out[0]==='__RESET__') {
+            reset();
+        }
         else {
             setHistory((h) => [...h,
                 {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`},
@@ -324,7 +331,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
     };
 
     const onKeyDown=(e) => {
-        if (e.ctrlKey && e.key === 'c' || e.key === 'Escape') {
+        if (/*e.shiftKey && e.key === 'c' || will fix this logic soon */ e.key === 'Escape') {
             if (hackerActive) { clearInterval(hackerRef.current); setHackerActive(false); setHistory(h => [...h, {k:'dim', t:'Hackertype ended!'}]); }
             return;
         }

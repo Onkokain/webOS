@@ -468,6 +468,37 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const altKeyPressed = event.altKey;
+
+      if (altKeyPressed) {
+        const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+        if (arrowKeys.includes(event.key)) {
+          event.preventDefault();
+
+          const focusable=[
+            ...tiledWindows.map(w=>w.id),
+            ...floating.map(f=>f.id),
+          ]
+
+          if (focusable.length===0){ return;}
+
+          const currentIndex=focusable.indexOf(activeId);
+          const safeIndex=currentIndex===-1 ? 0 : currentIndex // safety check to ensure activeid is in bounds
+
+          let nextIndex=safeIndex;
+
+          if (event.key==='ArrowRight' || event.key==='ArrowDown'){
+            nextIndex=(safeIndex+1)%focusable.length;
+          }
+
+          if (event.key==='ArrowLeft' || event.key==='ArrowUp'){
+            nextIndex=(safeIndex-1+focusable.length)%focusable.length;
+          }
+
+          setActiveId(focusable[nextIndex]);
+          return;
+        
+        }
+      }
       
       if (!altKeyPressed) {
         return;
@@ -529,13 +560,13 @@ export default function App() {
   const allKinds = [...tiledWindows.map(w => w.kind), ...floating.map(f => f.kind)];
   const allIds = Object.keys(registry).map(Number);
 
-  // Adjust bounds for content area when taskbar is visible
-  const contentBounds = {
-    x: 0,
-    y: 0, 
-    w: 100,
-    h: 100
-  };
+  // // Adjust bounds for content area when taskbar is visible
+  // const contentBounds = {
+  //   x: 0,
+  //   y: 0, 
+  //   w: 100,
+  //   h: 100
+  // };
 
   const winProps = (windowId, isFocused) => ({
     id: windowId,
@@ -550,6 +581,15 @@ export default function App() {
   });
 
   const renderById = (windowId, isFocused) => {
+    const handleResetUser = () => {
+        localStorage.removeItem('suprland-user');
+        localStorage.removeItem('suprland-fs');
+        localStorage.removeItem('suprland-settings')
+        window.location.reload();
+      };
+
+
+
     const windowKind = registry[windowId];
     const windowProps = winProps(windowId, isFocused);
     
@@ -577,8 +617,8 @@ export default function App() {
       const handleResetUser = () => {
         localStorage.removeItem('suprland-user');
         localStorage.removeItem('suprland-fs');
-        window.location.reload();
         localStorage.removeItem('suprland-settings')
+        window.location.reload();
       };
       
       return (
@@ -592,7 +632,9 @@ export default function App() {
     }
     
     const handleOpenApp = (appKind, url) => {
+      
       if (url) {
+
         setBrowserUrl(url);
       }
       openWindow(appKind);
@@ -606,6 +648,7 @@ export default function App() {
         user={user}
         onOpenApp={handleOpenApp}
         settings={settings}
+        reset={handleResetUser}
       />
     );
   };

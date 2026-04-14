@@ -18,13 +18,13 @@ export default function Notepad({ id, focused, onFocus, onClose, onSave }) {
     }
     
     const handleKeyDown = (event) => {
-      const altKeyPressed = event.altKey;
+      const ctrlKeyPressed = event.ctrlKey;
       const sKeyPressed = event.key === 's';
       
-      if (altKeyPressed && sKeyPressed) {
+      if (ctrlKeyPressed && sKeyPressed) {
         event.preventDefault();
         
-        const fileName = `note-${id}.txt`;
+        const fileName = `note-${id}.txt`;  
         onSave(fileName, text);
         setSaved(true);
         
