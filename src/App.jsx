@@ -664,7 +664,7 @@ export default function App() {
     }
     
     if (windowKind === 'browser') {
-      return <Browser {...windowProps} initialUrl={browserUrl} />;
+      return <Browser {...windowProps} initialUrl={browserUrl} isDragging={draggingId!==null} />;
     }
     
     if (windowKind === 'settings') {

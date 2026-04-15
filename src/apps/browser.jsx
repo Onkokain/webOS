@@ -1,9 +1,8 @@
 import { useState,useRef,useEffect} from 'react';
 import Window from '../ui/window';
-import { create } from 'motion/react-m';
 
 const DEFAULT_URL ='https://vyntr.com/'; 
-
+const capitalize=(str) => str.charAt(0).toUpperCase() + str.slice(1);
 function createTab(url=DEFAULT_URL) {
   const iurl=url.startsWith('http://') || url.startsWith('https://') ? url : 'https://' + url;
 
@@ -11,7 +10,7 @@ function createTab(url=DEFAULT_URL) {
     id: crypto.randomUUID(),
     url: iurl,
     input: iurl,
-    title:iurl.replace(/(^\w+:|^)\/\//, '').split('/')[0], 
+    title: capitalize((iurl.replace(/(^\w+:|^)\/\//, '').split('/')[0]).split('.')[0]),
     backStack: [],
     forwardStack: [],
   }
@@ -19,14 +18,14 @@ function createTab(url=DEFAULT_URL) {
 
 
 
-export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
+export default function Browser({ id, focused, onFocus, onClose, initialUrl,isDragging }) {
   const firstUrl = initialUrl ?? DEFAULT_URL;
 
   useEffect(() => {
     if (initialUrl && initialUrl !== DEFAULT_URL) {
-      setTabs([createTab(initialUrl)]);
-      SetActivetabid(null);
-
+      const newTab=createTab(initialUrl);
+      setTabs([newTab]);
+      SetActivetabid(newTab.id);
     }
 
   },[initialUrl])
@@ -90,7 +89,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
       ...tab,
       url: targetUrl,
       input:targetUrl,
-      title: targetUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
+      title: capitalize(targetUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0].split('.')[0]),
       backStack: [...tab.backStack, tab.url],
       forwardStack: [],
     }))
@@ -139,7 +138,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
         ...tab,
         url:previousUrl,
         input:previousUrl,
-        title:previousUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
+        title: capitalize(previousUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0].split('.')[0]),
         backStack:nextBack,
         forwardStack:[tab.url,...tab.forwardStack],
       }
@@ -156,7 +155,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
         ...tab,
         url:nextUrl,
         input:nextUrl,
-        title:nextUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
+        title: capitalize(nextUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0].split('.')[0]),
         backStack:[...tab.backStack, tab.url],
         forwardStack:nextForward,
       }
@@ -165,7 +164,13 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
   };
 
 
+  const handlemiddleclick=(e,tabId) => {
+    if (e.button==1) {
+      e.preventDefault();
+      closeTab(tabId);
+    }
 
+  }
   return (
     <Window id={id} title="browser" focused={focused} onFocus={onFocus} onClose={onClose}>
       <div className="flex items-center gap-1 px-2 py-1 bg-[#0d0d0d] border-b border-gray-800 overflow-x-auto hide-scroll">
@@ -175,6 +180,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
           return (
             <div
               key={tab.id}
+              onMouseDown={(e) => handlemiddleclick(e, tab.id)}
               className={`flex items-center gap-2 min-w-0 max-w-[180px] px-2 py-1 rounded-md border ${
                 isActive 
                 ? 'bg-gray-800 border-gray-600'
@@ -259,8 +265,8 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
           key={tab.id}
           allowFullScreen
           src={tab.url}
-          className={`w-full h-full border-none absolute inset-0 ${tab.id===activetabid? 'block' : 'hidden'}`}
-          sandbox='allow-scripts allow-same-origin allow-forms'
+          className={`w-full h-full border-none absolute inset-0 ${tab.id===activetabid? 'block' : 'hidden'} ${isDragging? 'pointer-events-none' : ''}`}
+          sandbox={`allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-top-navigation-by-user-activation  `}
           title={tab.title}
           
           

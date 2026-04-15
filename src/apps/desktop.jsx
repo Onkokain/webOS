@@ -78,6 +78,28 @@ function RenameInput({ name, onDone }) {
 }
 
 export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete,openwindow,setBrowserUrl }) {
+  
+  const [ctrlPressed, setCtrlPressed] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Control') setCtrlPressed(true);
+    };
+    
+    const handleKeyUp = (e) => {
+      if (e.key === 'Control') setCtrlPressed(false);
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+ const [DraggingWidget, setDraggingWidget] = useState(false);
 
 const [widgetPos,setWidgetPos] = useLocalStorage('suprland-widget-pos', {x:16,y:100});
 const[time,setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -91,15 +113,18 @@ useEffect(()=>{
 
 useEffect(()=>{
   const timer=setInterval(() => {
-    setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     return () => clearInterval(timer);
   }, 1000);
 
 },[]);
 
 const handleWidgetMouseDown=(e)=>{
+  if (!e.ctrlKey) return;
   if (e.button !== 0) return;
   e.stopPropagation();
+
+  setDraggingWidget(true);
   
   dragState.current = {
     isWidget: true,
@@ -125,6 +150,7 @@ const handleWidgetMouseDown=(e)=>{
   }
 
   const handleUp=()=>{
+    setDraggingWidget(false);
     window.removeEventListener('mouseup', handleUp);
     window.removeEventListener('mousemove', handleMove);
     dragState.current=null
@@ -512,7 +538,7 @@ const handleWidgetMouseDown=(e)=>{
   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.8] flex flex-row gap-5 text-gray-300 text-xs ">
     <div className='hover:scale-[1.2]'
       onClick={()=>{
-        setBrowserUrl('www.bilibili.tv/en');
+        setBrowserUrl('https://yarrlist.net/');
         openwindow('browser');
       }}
     >Websites</div>
@@ -530,7 +556,7 @@ const handleWidgetMouseDown=(e)=>{
       
       <div
         onMouseDown={handleWidgetMouseDown}
-        className='absolute w-34 p-4   border-gray-700 rounded-lg cursor-move z-30 '
+        className={`absolute w-34 p-4   border-gray-700 rounded-lg ${ctrlPressed && !DraggingWidget? 'cursor-grab' : ctrlPressed && DraggingWidget ? 'cursor-grabbing': ''} z-30`}
         style={{
           left:widgetPos.x,
           top:widgetPos.y,
@@ -538,7 +564,7 @@ const handleWidgetMouseDown=(e)=>{
         }}
       >
         <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2'>
-          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div> 
 
         <div className='font-mono text-sm text-gray-100 text-center mb-2'>

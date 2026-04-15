@@ -27,19 +27,19 @@ const WALLPAPERS = [
 const POSITIONS = ['bottom', 'top', 'left', 'right'];
 
 export default function Settings({ id, focused, onFocus, onClose, settings, onSettings, onResetUser }) {
-  const [tab, setTab] = useState('wallpaper');
+  const [tab, setTab] = useState('Personalize');
 
-  const tabs = ['wallpaper', 'taskbar', 'Personalize','system'];
+  const tabs = ['Personalize', 'Taskbar', 'Wallpaper','System', ];
 
   return (
     <Window id={id} title="settings" focused={focused} onFocus={onFocus} onClose={onClose}>
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="flex flex-col gap-1 p-2 border-r border-gray-800 w-28 flex-shrink-0">
+        <div className="flex flex-col gap-1 p-2 border-r border-gray-800 w-35 flex-shrink-0  items-center">
           {tabs.map(tabName => (
             <button
               key={tabName}
               onClick={() => setTab(tabName)}
-              className={`text-left px-3 py-1.5 rounded-lg font-mono text-xs transition-colors ${
+              className={`text-left px-3 py-1.5 rounded-lg font-mono text-xs hover:scale-110 transition-colors ${
                 tab === tabName
                   ? 'bg-gray-800 text-gray-200'
                   : 'text-gray-600 hover:text-gray-400'
