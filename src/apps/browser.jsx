@@ -1,5 +1,6 @@
 import { useState,useRef,useEffect} from 'react';
 import Window from '../ui/window';
+import { create } from 'motion/react-m';
 
 const DEFAULT_URL ='https://vyntr.com/'; 
 
@@ -21,8 +22,31 @@ function createTab(url=DEFAULT_URL) {
 export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
   const firstUrl = initialUrl ?? DEFAULT_URL;
 
-  const [tabs,setTabs]=useState([createTab(firstUrl)]);
-  const[activetabid,SetActivetabid]=useState(tabs[0].id);
+  const [tabs,setTabs]=useState(() => {
+    const saved=localStorage.getItem('suprland-browser_tabs');
+    return saved ? JSON.parse(saved) : [createTab(firstUrl)];
+  });
+
+  const[activetabid,SetActivetabid]=useState(() => {
+    const saved=localStorage.getItem('suprland-browser_activetabid');
+    if (saved) return saved;
+    const initialTabs=localStorage.getItem('suprland-browser_tabs');
+    if (initialTabs) {
+      const parsed=JSON.parse(initialTabs);
+      return parsed[0]?.id;
+    }
+    return createTab(firstUrl).id;
+  });
+
+  useEffect( () => {
+    localStorage.setItem('suprland-browser_tabs', JSON.stringify(tabs));
+  }, [tabs]);
+
+  useEffect(() => {
+    localStorage.setItem('suprland-browser_activetabid', activetabid);
+  },[activetabid]);
+
+  
   const [history,setHistory]= useState(()=> {
   const saved=localStorage.getItem('suprland-browser_history');
     return saved ? JSON.parse(saved) : [];
@@ -206,6 +230,8 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
           updateTab(activeTab.id, tab => ({...tab,url:tab.url}))
          }} 
         className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1">↺</button>
+
+
         <input
           value={activeTab?.input ?? ''}
           onChange={event =>{
@@ -216,18 +242,23 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
           spellCheck="false" 
 
         />
-        <button type="submit" className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1">→</button>
       </form>
+      
       <div className="flex-1 min-h-0 relative">
+        {tabs.map(tab=> (
+          <iframe
+          key={tab.id}
+          src={tab.url}
+          className={`w-full h-full border-none absolute inset-0 ${tab.id===activetabid? 'block' : 'hidden'}`}
+          sandbox='allow-scripts allow-same-origin allow-forms'
+          title={tab.title}
+          
+          
+          />
+        ))}
 
-        <iframe
-        ref={iframeRef}
-          key={activeTab?.url}
-          src={activeTab?.url}
-          className="w-full h-full border-none"
-          sandbox="allow-scripts allow-same-origin allow-forms "
-          title="browser"
-        />
+
+
       </div>
     </Window>
   );

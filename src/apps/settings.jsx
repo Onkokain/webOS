@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import Window from '../ui/window';
 import CuteButton from '../utils/cutebutton';
-import { text } from 'motion/react-client';
 const ALL_APPS = ['cli', 'notepad', 'camera', 'help', 'files', 'browser', 'settings'];
 
 const BASE = import.meta.env.BASE_URL;
 
 const WALLPAPERS = [
+  //default
   { label: 'Black', value: 'color:bg-black', preview: null },
+
+  //pictures
   { label: 'Ocean', value: `img:${BASE}wallpapers/adrien-olichon-RCAhiGJsUUE-unsplash.jpg`, preview: null },
   { label: 'Twilight', value: `img:${BASE}wallpapers/boicu-andrei-LgJsrwAYU8k-unsplash.jpg`, preview: null },
   { label: 'Desert', value: `img:${BASE}wallpapers/clay-banks-TQYTWfN1b7M-unsplash.jpg`, preview: null },
@@ -15,8 +17,12 @@ const WALLPAPERS = [
   { label: 'Autumn', value: `img:${BASE}wallpapers/fairuz-isni-CoWsg5McHac-unsplash.jpg`, preview: null },
   { label: 'Beach', value: `img:${BASE}wallpapers/samuel-sng-MNzVgkiJk9Q-unsplash.jpg`, preview: null },
   { label: 'Abstract', value: `img:${BASE}wallpapers/sebastian-svenson-d2w-_1LJioQ-unsplash.jpg`, preview: null },
+ //panorama
   { label: 'Anime', value: `img:${BASE}wallpapers/anime.jpg`, preview: null },
   { label: 'Valley', value: `img:${BASE}wallpapers/valley.jpg`, preview: null },
+  //videos
+  {label:'JJK', value:`video:${BASE}wallpapers/GOJO.mp4`, preview:null},
+
 ];
 
 const POSITIONS = ['bottom', 'top', 'left', 'right'];
@@ -71,9 +77,31 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
                         height="64"
                         style={{ contentVisibility: 'auto' }}
                       />
-                    ) : (
+                    ) : wallpaper.value.startsWith('color:') ? (
                       <div className={`w-full h-full ${wallpaper.value.replace('color:', '')}`} />
+                    ) : wallpaper.value.startsWith('img:') ? (
+                        <img
+                          src={wallpaper.value.replace('img:', '')}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                          width="120"
+                          height="64"
+                          style={{ contentVisibility: 'auto' }}
+                        />
+                    ):wallpaper.value.startsWith('video:')?(
+                      <video
+                        src={wallpaper.value.replace('video:', '')}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload='metadata'
+                      />
+                    ):(<div className='w-full h-full bg-black'/>
                     )}
+
                     <span className="absolute bottom-0 left-0 right-0 text-center font-mono text-[8px] text-gray-300 bg-black/50 py-0.5">
                       {wallpaper.label}
                     </span>

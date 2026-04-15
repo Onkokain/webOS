@@ -11,6 +11,7 @@ import Login from './apps/login';
 import FileManager from './apps/filemanager';
 import Browser from './apps/browser';
 import Settings from './apps/settings';
+import { object } from "motion/react-m";
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
@@ -693,13 +694,18 @@ export default function App() {
   };
 
   const isImgWallpaper = settings.wallpaper.startsWith('img:');
-  const wallpaperClass = isImgWallpaper ? 'bg-black' : settings.wallpaper.replace('color:', '');
-
+  const isVidWallpaper = settings.wallpaper.startsWith('video:');
+  const isPannableWallpaper=isImgWallpaper || isVidWallpaper
+  const wallpaperClass=!isImgWallpaper && !isVidWallpaper
+        ? settings.wallpaper.replace('color:','')
+        : 'bg-black';
+  
+  const videoSrc=isVidWallpaper? settings.wallpaper.replace('video:','') : '';
 
   const clamp=(value,min,max)=> Math.min(Math.max(value,min),max);
 
   const startpan=(e)=> {
-    if (!isImgWallpaper || e.button!==1){ return;}
+    if (!isPannableWallpaper || e.button!==1){ return;}
     e.preventDefault();
     setWppan(true);
 
@@ -721,6 +727,20 @@ export default function App() {
     transformOrigin: 'center,center',
     transition: 'transform 250ms ease'
     } : {};
+
+  const videoStyle=isVidWallpaper ? {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    objectPosition: `${wpoffset.x}% ${wpoffset.y}%`,
+    cursor: wppan ? 'grabbing' : 'default',
+    transform: wppan ? 'scale(1.02)' : 'none',
+    transformOrigin: 'center,center',
+    transition: 'transform 250ms ease',
+
+  }: {};
+  
+    
 
   if (!user) return <Login onLogin={handleLogin} />;
 
@@ -744,18 +764,38 @@ export default function App() {
         if (e.button===1) e.preventDefault();
       }}
       className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`}
-      style={{...wallpaperStyle, '--text-color': settings.textColor, '--text-size': settings.fontSize, '--text-font': settings.fontFamily}}
-
-
-
-
-      
+      style={{
+        ...wallpaperStyle,
+        cursor: isPannableWallpaper ? (wppan ? 'grabbing' : 'default') : 'default',
+         '--text-color':
+          settings.textColor,
+           '--text-size': settings.fontSize, 
+           '--text-font': settings.fontFamily}}
       >
+      {isVidWallpaper && (
+        <>
+          <video
+            src={videoSrc}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 z-0 pointer-events-none"  
+            style={videoStyle}
+          />
+          <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"/>
+        </>
+      )}
 
         <AnimatePresence>
           {showDesktop && (
-            <motion.div key='desktop' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-              className="absolute" 
+            <motion.div 
+              key='desktop' 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }} 
+              className="absolute z-10" 
               style={{
                 top: settings.taskbarPos === 'top' && !settings.autoHide ? `${taskbarHeight}px` : '0',
                 bottom: settings.taskbarPos === 'bottom' && !settings.autoHide ? `${taskbarHeight}px` : '0',
@@ -795,14 +835,14 @@ export default function App() {
             return (
               <div key={id}
                 onMouseDown={e => {
-                  if (e.button === 1) { e.preventDefault(); closeWindow(id); }
+                  if (e.button === 1 && tiledWin.kind !== 'browser') { e.preventDefault(); closeWindow(id); }
                   else { setActiveId(id); onTileHeaderMouseDown(e, id); }
                 }}
                 onTouchStart={e => {
                     setActiveId(id);
                     onTileHeaderTouchHold(e,id);
                 }}
-                className="absolute p-1"
+                className="absolute z-20 p-1"
                 style={{
                   left: `calc(${(tiledWin.bounds.x / 100) * availableWidth}% + ${leftOffset}px)`, 
                   top: `calc(${(tiledWin.bounds.y / 100) * availableHeight}% + ${topOffset}px)`,
@@ -823,10 +863,10 @@ export default function App() {
             return (
               <div key={id}
                 onMouseDown={e => {
-                  if (e.button === 1) { e.preventDefault(); closeWindow(id); return; }
+                  if (e.button === 1 && tiledWin.kind !== 'browser') { e.preventDefault(); closeWindow(id); return; }
                   setActiveId(id);
                 }}
-                className="absolute"
+                className="absolute z-20"
                 style={{ left: floatWin.x, top: floatWin.y, width: floatWin.w, height: floatWin.h, zIndex: isActive ? 50 : 30 }}>
                 <div className="w-full h-full relative">
                   {renderById(id, isActive)}
