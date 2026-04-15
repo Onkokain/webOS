@@ -1,6 +1,5 @@
 import { useState,useRef,useEffect} from 'react';
 import Window from '../ui/window';
-import { input, title } from 'motion/react-client';
 
 const DEFAULT_URL ='https://vyntr.com/'; 
 const capitalize=(str) => str.charAt(0).toUpperCase() + str.slice(1);

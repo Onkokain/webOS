@@ -519,39 +519,7 @@ const handleWidgetMouseDown=(e)=>{
       }}
     >
       
-      <div className="relative top-0 left-0 right-0 h-10 bg-gray-900/80 border border-gray-700 rounded-lg">
-  
-  <div className="h-full flex flex-row items-center justify-between px-4 z-40">
-    
-    <div className="font-mono text-xs text-gray-400 tracking-widest">
-      {user}
-    </div>
 
-    <div className="font-mono text-xs text-gray-500">
-      {new Date().toLocaleDateString([], { month: "short", day: "numeric" })}
-      &emsp;
-      {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-    </div>
-
-  </div>
-
-  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.8] flex flex-row gap-5 text-gray-300 text-xs ">
-    <div className='hover:scale-[1.2]'
-      onClick={()=>{
-        setBrowserUrl('https://yarrlist.net/');
-        openwindow('browser');
-      }}
-    >Websites</div>
-    <div className='hover:scale-[1.2]'
-      onClick={()=> openwindow('faq')}
-    >FAQ</div>
-    <div className='hover:scale-[1.2]'
-     onClick={() =>openwindow('help')}>Help</div>
-    <div className='hover:scale-[1.2]'>GitHub</div>
-
-  </div>
-
-</div>
 
       
       <div

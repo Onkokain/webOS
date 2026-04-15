@@ -1,6 +1,14 @@
 import { useEffect, useState, useRef } from "react";
-import { AnimatePresence, motion, transform } from "framer-motion";
-import { createLeaf, countLeaves, getFirstLeafId, getLeafDepth, splitNode, removeNode, collectLeaves } from './utils/tree';
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  createLeaf,
+  countLeaves,
+  getFirstLeafId,
+  getLeafDepth,
+  splitNode,
+  removeNode,
+   collectLeaves
+       } from './utils/tree';
 import Cli from './apps/cmd';
 import Notepad from './apps/notepad';
 import Camera from './apps/camera';
@@ -12,6 +20,7 @@ import FileManager from './apps/filemanager';
 import Browser from './apps/browser';
 import Settings from './apps/settings';
 import Faq from './apps/faq';
+import Topbar from './apps/topbar';
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
@@ -48,6 +57,8 @@ export default function App() {
   const [wpoffset,setWpoffset]=useState({x:50,y:50});
   const [wppan,setWppan]=useState(false);
   const panref=useRef(null);
+
+  const TOPBAR_HEIGHT=40;
 
 
   const [user, setUser] = useState(() => localStorage.getItem('suprland-user')); // username is saved to localstorage
@@ -589,10 +600,10 @@ export default function App() {
         f: 'files',
         b: 'browser',
         s: 'settings',
-        f: 'faq',
+        q: 'faq',
       };
       
-      const appToOpen = keyToAppMap[key];
+      const appToOpen = keyToAppMap[event.key.toLowerCase()];
       const isEnterKey = event.key === 'Enter';
       
       if (appToOpen || isEnterKey) {
@@ -763,6 +774,7 @@ export default function App() {
   const taskbarWidth = settings.autoHide ? 0 : (settings.taskbarPos === 'left' || settings.taskbarPos === 'right' ? 105 : 0);
   
   const contentStyle = {
+    display:'none',
     paddingBottom: settings.taskbarPos === 'bottom' && !settings.autoHide ? `${taskbarHeight}px` : '0',
     paddingTop: settings.taskbarPos === 'top' && !settings.autoHide ? `${taskbarHeight}px` : '0',
     paddingLeft: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
@@ -771,13 +783,16 @@ export default function App() {
 
   return (
     <>
+    <div className="fixed top-0 left-0 w-full z-[999]">
+  <Topbar openwindow={openWindow} setBrowserUrl={setBrowserUrl} user={user} />
+</div>
       <div 
       ref={screenRef} 
       onMouseDown={startpan}
       onAuxClick={(e)=> {
         if (e.button===1) e.preventDefault();
       }}
-      className={`relative w-screen h-screen overflow-hidden ${wallpaperClass}`}
+      className={`relative w-screen h-screen overflow-hidden pt-10 ${wallpaperClass}`}
       style={{
         ...wallpaperStyle,
         cursor: isPannableWallpaper ? (wppan ? 'grabbing' : 'default') : 'default',
@@ -802,6 +817,7 @@ export default function App() {
         </>
       )}
 
+
         <AnimatePresence>
           {showDesktop && (
             <motion.div 
@@ -811,7 +827,9 @@ export default function App() {
               exit={{ opacity: 0 }} 
               className="absolute z-10" 
               style={{
-                top: settings.taskbarPos === 'top' && !settings.autoHide ? `${taskbarHeight}px` : '0',
+                top: `calc(${TOPBAR_HEIGHT}px + ${
+                settings.taskbarPos === 'top' && !settings.autoHide ? taskbarHeight : 0
+              }px)`,
                 bottom: settings.taskbarPos === 'bottom' && !settings.autoHide ? `${taskbarHeight}px` : '0',
                 left: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
                 right: settings.taskbarPos === 'right' && !settings.autoHide ? `${taskbarWidth}px` : '0',
@@ -839,13 +857,12 @@ export default function App() {
             const isTarget = dragOverId === id;
             
             // Calculate actual position accounting for taskbar
-            const topOffset = settings.taskbarPos === 'top' && !settings.autoHide ? taskbarHeight : 0;
+            const topOffset = TOPBAR_HEIGHT+(settings.taskbarPos === 'top' && !settings.autoHide ? taskbarHeight : 0);
+
             const leftOffset = settings.taskbarPos === 'left' && !settings.autoHide ? taskbarWidth : 0;
-            const availableHeight = settings.taskbarPos === 'top' || settings.taskbarPos === 'bottom' ? 
-              (settings.autoHide ? 100 : 100 - (taskbarHeight / window.innerHeight * 100)) : 100;
-            const availableWidth = settings.taskbarPos === 'left' || settings.taskbarPos === 'right' ? 
-              (settings.autoHide ? 100 : 100 - (taskbarWidth / window.innerWidth * 100)) : 100;
-            
+            const totalReservedHeight = TOPBAR_HEIGHT + taskbarHeight;
+            const totalReservedWidth = taskbarWidth;
+
             return (
               <div key={id}
                 onTouchStart={e => {
@@ -854,13 +871,14 @@ export default function App() {
                 }}
                 className="absolute z-20 p-1"
                 style={{
-                  left: `calc(${(tiledWin.bounds.x / 100) * availableWidth}% + ${leftOffset}px)`, 
-                  top: `calc(${(tiledWin.bounds.y / 100) * availableHeight}% + ${topOffset}px)`,
-                  width: `${(tiledWin.bounds.w / 100) * availableWidth}%`, 
-                  height: `${(tiledWin.bounds.h / 100) * availableHeight}%`,
-                  zIndex: isDragging ? 30 : tiledWin.focused ? 20 : 10,
+                  left: `calc(${leftOffset}px + (100vw - ${totalReservedWidth}px) * ${tiledWin.bounds.x / 100})`, 
+                  top: `calc(${topOffset}px + (100vh - ${totalReservedHeight}px) * ${tiledWin.bounds.y / 100})`,
+                  width: `calc((100vw - ${totalReservedWidth}px) * ${tiledWin.bounds.w / 100})`, 
+                  height: `calc((100vh - ${totalReservedHeight}px) * ${tiledWin.bounds.h / 100})`,
+                  zIndex: isDragging ? 55 : tiledWin.focused ? 40 : 10,
                   transition: 'left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease',
                 }}>
+
                 <div style={{ transform: isTarget ? 'scale(0.8)' : 'scale(1)', transition: 'transform 0.15s ease', width: '100%', height: '100%' }}>
                   {renderById(id, tiledWin.focused)}
                 </div>
@@ -914,3 +932,4 @@ export default function App() {
     </>
   );
 }
+  

@@ -10,16 +10,16 @@ const WALLPAPERS = [
   { label: 'Black', value: 'color:bg-black', preview: null },
 
   //pictures
-  { label: 'Ocean', value: `img:${BASE}wallpapers/adrien-olichon-RCAhiGJsUUE-unsplash.jpg`, preview: null },
-  { label: 'Twilight', value: `img:${BASE}wallpapers/boicu-andrei-LgJsrwAYU8k-unsplash.jpg`, preview: null },
-  { label: 'Desert', value: `img:${BASE}wallpapers/clay-banks-TQYTWfN1b7M-unsplash.jpg`, preview: null },
-  { label: 'Mountain', value: `img:${BASE}wallpapers/daniel-leone-g30P1zcOzXo-unsplash.jpg`, preview: null },
-  { label: 'Autumn', value: `img:${BASE}wallpapers/fairuz-isni-CoWsg5McHac-unsplash.jpg`, preview: null },
-  { label: 'Beach', value: `img:${BASE}wallpapers/samuel-sng-MNzVgkiJk9Q-unsplash.jpg`, preview: null },
-  { label: 'Abstract', value: `img:${BASE}wallpapers/sebastian-svenson-d2w-_1LJioQ-unsplash.jpg`, preview: null },
+  { label: 'Ocean', value: `img:${BASE}wallpapers/ocean.jpg`, preview: `${BASE}wallpaper-previews/ocean.jpg` },
+  { label: 'Twilight', value: `img:${BASE}wallpapers/twilight.jpg`, preview: `${BASE}wallpaper-previews/twilight.jpg` },
+  { label: 'Desert', value: `img:${BASE}wallpapers/desert.jpg`, preview: `${BASE}wallpaper-previews/desert.jpg` },
+  { label: 'Mountain', value: `img:${BASE}wallpapers/mountain.jpg`, preview: `${BASE}wallpaper-previews/mountain.jpg` },
+  { label: 'Autumn', value: `img:${BASE}wallpapers/autumn.jpg`, preview: `${BASE}wallpaper-previews/autumn.jpg` },
+  { label: 'Beach', value: `img:${BASE}wallpapers/beach.jpg`, preview: `${BASE}wallpaper-previews/beach.jpg` },
+  { label: 'Abstract', value: `img:${BASE}wallpapers/abstract.jpg`, preview: `${BASE}wallpaper-previews/abstract.jpg` },
  //panorama
-  { label: 'Anime', value: `img:${BASE}wallpapers/anime.jpg`, preview: null },
-  { label: 'Valley', value: `img:${BASE}wallpapers/valley.jpg`, preview: null },
+  { label: 'Anime', value: `img:${BASE}wallpapers/anime.jpg`, preview: `${BASE}wallpaper-previews/anime.jpg` },
+  { label: 'Valley', value: `img:${BASE}wallpapers/valley.jpg`, preview: `${BASE}wallpaper-previews/valley.jpg` },
   //videos
 
 ];
@@ -52,7 +52,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
 
         <div className="flex-1 min-w-0 overflow-y-auto p-4 hide-scroll">
 
-          {tab === 'wallpaper' && (
+          {tab === 'Wallpaper' && (
             <div className="flex flex-col gap-3">
               <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">Wallpaper</p>
               <div className="grid grid-cols-3 gap-2">
@@ -110,7 +110,7 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
             </div>
           )}
 
-          {tab === 'taskbar' && (
+          {tab === 'Taskbar' && (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">Visible Apps</p>
@@ -174,12 +174,12 @@ export default function Settings({ id, focused, onFocus, onClose, settings, onSe
                     <span className="text-black text-[10px] font-bold">✓</span>
                   )}
                 </div>
-                <span className="font-mono text-xs text-gray-400">Auto-hide taskbar</span>
+                <span className="font-mono text-xs text-gray-400">Auto-hide Taskbar</span>
               </label>
             </div>
           )}
 
-          {tab === 'system' && (
+          {tab === 'System' && (
             <div className="flex flex-col gap-3">
               <p className="font-mono text-gray-500 text-[15px] tracking-widest uppercase">System</p>
               <button

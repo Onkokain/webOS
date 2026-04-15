@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BsTerminalFill } from "react-icons/bs";
 import { BiSolidNotepad } from "react-icons/bi";
@@ -60,8 +60,13 @@ const positionStyles = {
 };
 
 export default function Taskbar({ onOpen, openKinds, settings }) {
+
   const [visible, setVisible] = useState(!settings.autoHide);
   const [hovered, setHovered] = useState(null);
+
+  useEffect(() => {
+    setVisible(!settings.autoHide);
+  }, [settings.autoHide]);
 
   const taskbarPosition = positionStyles[settings.taskbarPos] ?? positionStyles.bottom;
   const visibleApps = ALL_APPS.filter(app => !settings.hiddenApps.includes(app.kind));
