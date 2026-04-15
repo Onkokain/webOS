@@ -927,8 +927,9 @@ export default function App() {
           );
         })()}
 
-        <Taskbar onOpen={openWindow} openKinds={allKinds} settings={settings} />
       </div>
+        <Taskbar onOpen={openWindow} openKinds={allKinds} settings={settings} />
+
     </>
   );
 }

@@ -13,7 +13,7 @@ export default function Topbar({openwindow, setBrowserUrl,user}) {
         </div>
     </div>
 
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.8] flex flex-row gap-5 text-gray-300 text-xs ">
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.8] flex flex-row gap-10 text-gray-300 text-xs ">
     <div className='hover:scale-[1.2] cursor-pointer'
       onClick={()=>{
         setBrowserUrl('https://yarrlist.net/');

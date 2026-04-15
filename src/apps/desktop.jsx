@@ -107,7 +107,7 @@ const [temp,setTemp]=useState(null);
 
 useEffect(()=>{
   const centerX=(window.innerWidth/2)-68
-  const centerY=(window.innerHeight/2)-60
+  const centerY=(window.innerHeight-100)/2-60
   setWidgetPos({x:centerX,y:centerY});
 },[]);
 
