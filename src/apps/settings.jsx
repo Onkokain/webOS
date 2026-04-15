@@ -21,7 +21,6 @@ const WALLPAPERS = [
   { label: 'Anime', value: `img:${BASE}wallpapers/anime.jpg`, preview: null },
   { label: 'Valley', value: `img:${BASE}wallpapers/valley.jpg`, preview: null },
   //videos
-  {label:'JJK', value:`video:${BASE}wallpapers/GOJO.mp4`, preview:null},
 
 ];
 
