@@ -77,7 +77,7 @@ function RenameInput({ name, onDone }) {
   );
 }
 
-export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
+export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete,openwindow,setBrowserUrl }) {
 
 const [widgetPos,setWidgetPos] = useLocalStorage('suprland-widget-pos', {x:16,y:100});
 const[time,setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -482,6 +482,7 @@ const handleWidgetMouseDown=(e)=>{
   }, [selected, clipboard, fs, renaming]);
 
   return (
+    
     <div 
       ref={ref}
       className="relative w-full h-full overflow-hidden select-none"
@@ -491,19 +492,41 @@ const handleWidgetMouseDown=(e)=>{
         setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' });
       }}
     >
-      <div
-        className='absolute top-0 left-0 right-0 h-10 bg-gray-900/80 border radius-lg border-gray-700 flex items-center justify-between px-4 z-40'
-      >
-        <div className='font-mono text-xs text-gray-400 tracking-widset'>
-          {user}
-        </div>
-        <div className='font-mono text-xs text-gray-500'>{new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}
-          &emsp;
-          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          
-          
-        </div>
-      </div>
+      
+      <div className="relative top-0 left-0 right-0 h-10 bg-gray-900/80 border border-gray-700 rounded-lg">
+  
+  <div className="h-full flex flex-row items-center justify-between px-4 z-40">
+    
+    <div className="font-mono text-xs text-gray-400 tracking-widest">
+      {user}
+    </div>
+
+    <div className="font-mono text-xs text-gray-500">
+      {new Date().toLocaleDateString([], { month: "short", day: "numeric" })}
+      &emsp;
+      {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+    </div>
+
+  </div>
+
+  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.8] flex flex-row gap-5 text-gray-300 text-xs ">
+    <div className='hover:scale-[1.2]'
+      onClick={()=>{
+        setBrowserUrl('www.bilibili.tv/en');
+        openwindow('browser');
+      }}
+    >Websites</div>
+    <div className='hover:scale-[1.2]'
+      onClick={()=> openwindow('faq')}
+    >FAQ</div>
+    <div className='hover:scale-[1.2]'
+     onClick={() =>openwindow('help')}>Help</div>
+    <div className='hover:scale-[1.2]'>GitHub</div>
+
+  </div>
+
+</div>
+
       
       <div
         onMouseDown={handleWidgetMouseDown}
@@ -511,7 +534,7 @@ const handleWidgetMouseDown=(e)=>{
         style={{
           left:widgetPos.x,
           top:widgetPos.y,
-          transform:'scale(2.7  )'
+          transform:'scale(2.7)'
         }}
       >
         <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2'>

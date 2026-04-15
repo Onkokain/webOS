@@ -4,15 +4,15 @@ const CONTENT = `SUPRLAND* — KEYBOARD SHORTCUTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 WINDOWS
-  alt + enter    :   open terminal
-  alt + n        :   open notepad
-  alt + c        :   open camera
-  alt + h        :   open help
-  alt + f        :   open file manager
-  alt + b        :   open browser
-  alt + s        :   open settings
-  alt + d        :   close focused window
-  alt + shift + f:   toggle float/tile window
+  ctrl + enter    :   open terminal
+  ctrl + n        :   open notepad
+  ctrl + c        :   open camera
+  ctrl + h        :   open help
+  ctrl + f        :   open file manager
+  ctrl + b        :   open browser
+  ctrl + s        :   open settings
+  ctrl + d        :   close focused window
+  ctrl + shift + f:   toggle float/tile window
   middle click   :   close window
 
 TERMINAL COMMANDS
@@ -40,7 +40,7 @@ TERMINAL COMMANDS
   clear / cls        :   clear terminal output
 
 NOTEPAD
-  alt + s        :   save note to desktop
+  ctrl + s        :   save note to desktop
 
 CAMERA
   photo          :   take a photo

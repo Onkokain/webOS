@@ -22,6 +22,15 @@ function createTab(url=DEFAULT_URL) {
 export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
   const firstUrl = initialUrl ?? DEFAULT_URL;
 
+  useEffect(() => {
+    if (initialUrl && initialUrl !== DEFAULT_URL) {
+      setTabs([createTab(initialUrl)]);
+      SetActivetabid(null);
+
+    }
+
+  },[initialUrl])
+
   const [tabs,setTabs]=useState(() => {
     const saved=localStorage.getItem('suprland-browser_tabs');
     return saved ? JSON.parse(saved) : [createTab(firstUrl)];

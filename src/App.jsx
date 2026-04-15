@@ -11,10 +11,11 @@ import Login from './apps/login';
 import FileManager from './apps/filemanager';
 import Browser from './apps/browser';
 import Settings from './apps/settings';
+import Faq from './apps/faq';
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
-const SINGLE_WINDOW = ['camera', 'help', 'settings', 'files'];
+const SINGLE_WINDOW = ['camera', 'help', 'settings', 'files', 'faq']; 
 
 // swaps two apps; hold left click and drag a window over another to swap positions
 function swapIds(node, idA, idB) {
@@ -587,7 +588,8 @@ export default function App() {
         h: 'help',
         f: 'files',
         b: 'browser',
-        s: 'settings'
+        s: 'settings',
+        f: 'faq',
       };
       
       const appToOpen = keyToAppMap[key];
@@ -615,13 +617,6 @@ export default function App() {
   const allKinds = [...tiledWindows.map(w => w.kind), ...floating.map(f => f.kind)];
   const allIds = Object.keys(registry).map(Number);
 
-  // // Adjust bounds for content area when taskbar is visible
-  // const contentBounds = {
-  //   x: 0,
-  //   y: 0, 
-  //   w: 100,
-  //   h: 100
-  // };
 
   const winProps = (windowId, isFocused) => ({
     id: windowId,
@@ -658,6 +653,10 @@ export default function App() {
     
     if (windowKind === 'help') {
       return <Help {...windowProps} />;
+    }
+    
+    if (windowKind === 'faq') {
+      return <Faq {...windowProps} />;
     }
     
     if (windowKind === 'files') {
@@ -817,7 +816,7 @@ export default function App() {
                 left: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
                 right: settings.taskbarPos === 'right' && !settings.autoHide ? `${taskbarWidth}px` : '0',
               }}>
-              <Desktop fs={fs} setFs={setFs} user={user} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
+              <Desktop fs={fs} setFs={setFs} user={user} openwindow={openWindow} setBrowserUrl={setBrowserUrl} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
                 onDelete={(path) => { 
                   setFs(prev => { 
                     const n = { ...prev }; 
