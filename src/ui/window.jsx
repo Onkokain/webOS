@@ -12,12 +12,18 @@ export default function Window({ id, title, focused, onFocus, onClose, children 
   const focusIndicator = focused ? ' • focused' : '';
   
   return (
-    <div
-      onMouseDown={handleMouseDown}
+    <div onMouseDown={handleMouseDown}
       className={`flex h-full w-full flex-col overflow-hidden border-2 rounded-3xl bg-[#0a0a0f] transition-colors duration-200 relative ${borderColor}`}
       style={{ backdropFilter: 'blur(10px)', containerType: 'size' }}
     >
-      <div className="flex-shrink-0 row justify-between px-3 py-2 bg-[#111] select-none">
+      <div 
+      onMouseDown={(e) => {
+        if (e.button===1) {
+          e.preventDefault();
+          onClose(id);
+        }
+      }}
+      className="flex-shrink-0 row justify-between px-3 py-2 bg-[#111] select-none">
         <div className="row gap-1.5">
           <button
             onClick={handleCloseClick}

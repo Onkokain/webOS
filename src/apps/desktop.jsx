@@ -556,14 +556,14 @@ const handleWidgetMouseDown=(e)=>{
       
       <div
         onMouseDown={handleWidgetMouseDown}
-        className={`absolute w-34 p-4   border-gray-700 rounded-lg ${ctrlPressed && !DraggingWidget? 'cursor-grab' : ctrlPressed && DraggingWidget ? 'cursor-grabbing': ''} z-30`}
+        className={`absolute w-40 p-4 border-gray-700 rounded-lg ${ctrlPressed && !DraggingWidget? 'cursor-grab' : ctrlPressed && DraggingWidget ? 'cursor-grabbing': ''} z-30`}
         style={{
           left:widgetPos.x,
           top:widgetPos.y,
           transform:'scale(2.7)'
         }}
       >
-        <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2'>
+        <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2 '>
           {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div> 
 

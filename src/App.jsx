@@ -848,10 +848,6 @@ export default function App() {
             
             return (
               <div key={id}
-                onMouseDown={e => {
-                  if (e.button === 1 && tiledWin.kind !== 'browser') { e.preventDefault(); closeWindow(id); }
-                  else { setActiveId(id); onTileHeaderMouseDown(e, id); }
-                }}
                 onTouchStart={e => {
                     setActiveId(id);
                     onTileHeaderTouchHold(e,id);

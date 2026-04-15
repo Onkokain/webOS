@@ -1,5 +1,6 @@
 import { useState,useRef,useEffect} from 'react';
 import Window from '../ui/window';
+import { input, title } from 'motion/react-client';
 
 const DEFAULT_URL ='https://vyntr.com/'; 
 const capitalize=(str) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -13,6 +14,7 @@ function createTab(url=DEFAULT_URL) {
     title: capitalize((iurl.replace(/(^\w+:|^)\/\//, '').split('/')[0]).split('.')[0]),
     backStack: [],
     forwardStack: [],
+    reloadId:0,
   }
 }
 
@@ -29,6 +31,25 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl,isDr
     }
 
   },[initialUrl])
+
+  const syncIframeUrl =() => {
+    const iframe=iframeRef.current;
+    if (!iframe || !activeTab) return;
+    try {
+      const href=iframe.contentWindow.location.href;
+      updateTab(activeTab.id, tab => ({
+        ...tab,
+        url:href,
+        input:href,
+        title: capitalize(href.replace(/(^\w+:|^)\/\//, '').split('/')[0].split('.')[0]),
+    
+      }))
+
+    }
+    catch(e) {
+        console.log('woo hoo error go cry!')
+    }
+  }
 
   const [tabs,setTabs]=useState(() => {
     const saved=localStorage.getItem('suprland-browser_tabs');
@@ -198,7 +219,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl,isDr
               <button
                 type='button'
                 onClick={() => {closeTab(tab.id)}}
-                className='text-[10px] text-gray-500 hover:text-gray-300'
+                className='text-[10px] text-gray-500 hover:text-gray-300 hover:scale-110 transition-transform' 
                 aria-label='Close tab'
               >
                 x
@@ -242,9 +263,13 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl,isDr
         <button type="button" 
         onClick={() => { 
           if (!activeTab) return;
-          updateTab(activeTab.id, tab => ({...tab,url:tab.url}))
+          updateTab(activeTab.id, tab => ({...tab,
+            reloadId: tab.reloadId + 1,
+          }))
          }} 
-        className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1">↺</button>
+        className="text-gray-600 hover:text-gray-300 font-mono text-xs transition-colors px-1 hover:scale-110 ">
+          ↺
+          </button>
 
 
         <input
@@ -255,16 +280,17 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl,isDr
           }}
           className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-gray-300 font-mono text-xs outline-none focus:border-gray-500 transition-colors"
           spellCheck="false" 
-
         />
       </form>
       
       <div className="flex-1 min-h-0 relative">
         {tabs.map(tab=> (
           <iframe
-          key={tab.id}
+          ref={tab.id===activetabid ? iframeRef:null}
+          key={`${tab.id}-${tab.reloadId}`}
           allowFullScreen
           src={tab.url}
+          onLoad={tab.id===activetabid? syncIframeUrl:undefined}
           className={`w-full h-full border-none absolute inset-0 ${tab.id===activetabid? 'block' : 'hidden'} ${isDragging? 'pointer-events-none' : ''}`}
           sandbox={`allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-top-navigation-by-user-activation  `}
           title={tab.title}
