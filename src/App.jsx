@@ -11,7 +11,6 @@ import Login from './apps/login';
 import FileManager from './apps/filemanager';
 import Browser from './apps/browser';
 import Settings from './apps/settings';
-import { object } from "motion/react-m";
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
@@ -28,7 +27,23 @@ function swapIds(node, idA, idB) {
   return { ...node, first: swapIds(node.first, idA, idB), second: swapIds(node.second, idA, idB) };
 }
 
+
+
+
 export default function App() {
+
+  useEffect(() => {
+    const handleClick=() => {
+        if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch((e) => {
+      console.log('failed')
+    });
+  }
+  window.removeEventListener('click',handleClick);
+    };
+    window.addEventListener('click',handleClick);
+  return() => window.removeEventListener('click',handleClick);
+},[]);
   const [wpoffset,setWpoffset]=useState({x:50,y:50});
   const [wppan,setWppan]=useState(false);
   const panref=useRef(null);
@@ -46,10 +61,10 @@ export default function App() {
   const [fmPath, setFmPath] = useState(null);
   const [floating, setFloating] = useState([]);
   const [registry, setRegistry] = useState({});
-
+  const BASE = import.meta.env.BASE_URL;
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('suprland-settings');
-    return saved ? JSON.parse(saved) : { wallpaper: 'color:bg-black', hiddenApps: [], taskbarPos: 'bottom', autoHide: false,textColor: 'rgb(200, 202, 202)' , fontSize:'16px', fontFamily:"'Inter', 'sans-serif'"};
+    return saved ? JSON.parse(saved) : { wallpaper: `img:${BASE}wallpapers/anime.jpg`, hiddenApps: [], taskbarPos: 'bottom', autoHide: false,textColor: 'rgb(81, 230, 68)' , fontSize:'16px', fontFamily:"Saira Stencil"};
   });
 
   const [browserUrl, setBrowserUrl] = useState(null);
@@ -507,9 +522,9 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const altKeyPressed = event.altKey;
+      const ctrlKeyPressed = event.ctrlKey;
 
-      if (altKeyPressed) {
+      if (ctrlKeyPressed) {
         const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
         if (arrowKeys.includes(event.key)) {
           event.preventDefault();
@@ -540,7 +555,7 @@ export default function App() {
         }
       }
       
-      if (!altKeyPressed) {
+      if (!ctrlKeyPressed) {
         return;
       }
       

@@ -248,6 +248,7 @@ export default function Browser({ id, focused, onFocus, onClose, initialUrl }) {
         {tabs.map(tab=> (
           <iframe
           key={tab.id}
+          allowFullScreen
           src={tab.url}
           className={`w-full h-full border-none absolute inset-0 ${tab.id===activetabid? 'block' : 'hidden'}`}
           sandbox='allow-scripts allow-same-origin allow-forms'

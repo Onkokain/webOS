@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { getIcon } from '../ui/icons';
 import FileViewer from '../ui/viewer';
 import ContextMenu from '../ui/contextmenu';
@@ -12,6 +12,10 @@ const ICON_HEIGHT = 84;
 const E_IMAGE= new Set(['png','jpg','jpeg','gif','bmp','webp']);
 const E_VIDEO= new Set(['mp4','webm','ogg']);
 const E_AUDIO= new Set(['mp3','wav','ogg']); 
+
+
+
+
 
 const getFileExtension =(name = '') => {
   const idx=name.lastIndexOf('.');
@@ -41,7 +45,7 @@ const isEditable = (e) => {
 function getAutoPosition(index) {
   return {
     x: 16 + Math.floor(index / 9) * (ICON_WIDTH + 20),
-    y: 16 + (index % 9) * (ICON_HEIGHT + 8)
+    y: 40 + (index % 9) * (ICON_HEIGHT + 8)
   };
 }
 
@@ -74,6 +78,63 @@ function RenameInput({ name, onDone }) {
 }
 
 export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
+
+const [widgetPos,setWidgetPos] = useLocalStorage('suprland-widget-pos', {x:16,y:100});
+const[time,setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+const [temp,setTemp]=useState(null);
+
+useEffect(()=>{
+  const centerX=(window.innerWidth/2)-68
+  const centerY=(window.innerHeight/2)-60
+  setWidgetPos({x:centerX,y:centerY});
+},[]);
+
+useEffect(()=>{
+  const timer=setInterval(() => {
+    setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    return () => clearInterval(timer);
+  }, 1000);
+
+},[]);
+
+const handleWidgetMouseDown=(e)=>{
+  if (e.button !== 0) return;
+  e.stopPropagation();
+  
+  dragState.current = {
+    isWidget: true,
+    startMouse: { x: e.clientX, y: e.clientY },
+    startPos: {...widgetPos},
+    moved: false,
+  }
+
+  const handleMove=(me)=>{
+    const dx=me.clientX - dragState.current.startMouse.x;
+    const dy=me.clientY - dragState.current.startMouse.y;
+
+    if (Math.abs(dx) + Math.abs(dy) > 3) {
+      dragState.current.moved = true;
+    }
+
+    if (dragState.current.moved) {
+      setWidgetPos({
+        x: dragState.current.startPos.x + dx,
+        y: dragState.current.startPos.y + dy,
+      })
+    }
+  }
+
+  const handleUp=()=>{
+    window.removeEventListener('mouseup', handleUp);
+    window.removeEventListener('mousemove', handleMove);
+    dragState.current=null
+  }
+    window.addEventListener('mouseup', handleUp);
+    window.addEventListener('mousemove', handleMove);
+
+}
+
+
   const root = `/home/${user}/`;
   const ref = useRef(null);
   const dragState = useRef(null);
@@ -430,6 +491,42 @@ export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete }) {
         setMenu({ x: e.clientX, y: e.clientY, kind: 'bg' });
       }}
     >
+      <div
+        className='absolute top-0 left-0 right-0 h-10 bg-gray-900/80 border radius-lg border-gray-700 flex items-center justify-between px-4 z-40'
+      >
+        <div className='font-mono text-xs text-gray-400 tracking-widset'>
+          {user}
+        </div>
+        <div className='font-mono text-xs text-gray-500'>{new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}
+          &emsp;
+          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          
+          
+        </div>
+      </div>
+      
+      <div
+        onMouseDown={handleWidgetMouseDown}
+        className='absolute w-34 p-4   border-gray-700 rounded-lg cursor-move z-30 '
+        style={{
+          left:widgetPos.x,
+          top:widgetPos.y,
+          transform:'scale(2.7  )'
+        }}
+      >
+        <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2'>
+          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div> 
+
+        <div className='font-mono text-sm text-gray-100 text-center mb-2'>
+          {temp ? `${temp}°C` : '27°C'}
+        </div> 
+        
+        <div className='font-mono text-xs text-gray-500 text-center'>
+         {new Date().toLocaleDateString([], {weekday:'short', month: 'short', day: 'numeric' })}
+        </div>
+        
+      </div>  
       {entries.map(entry => {
         const isSelected = selected.has(entry.path);
 
