@@ -1,42 +1,239 @@
-# Suprland*
+# Suprland* 
+A **tiling-based** Web Operating system live at [Suprland*](https://onkokain.github.io/webOS/)
+![Suprland](./public/demo.png)
 
-Suprland* is a web based Operating System inspired by Hyprland, a popular tiling based operating system. I built the website from an AI template and learned various concepts of react js. I also had a lot of fun building this project. ;D 
+---
 
-## Note:
-The 4th icon on the desktop is a help icon; open it to learn all about the shortcut keys used {there is no feature for custom keybinds yet for expect it to be added soon}
+## Overview
+Suprland* is a **tiling based** web-OS that you can access directly through your browser. It is currently live at [Suprland*](https://onkokain.github.io/webOS/) and can be accessed from any web browser with HTML5 and modern JS support. I wanted to build a web OS that would differentiate itself from the rest; and what I came up with was Suprland*, not a floating based **BUT** a tiling-based Web-OS.
+
+You might ask what *tiling-based* means. In simple terms, the windows are like tiles of a wall, they arrange and resize themselves perfectly and never overlap. You can have up to 6 windows open at a time and toggle through them at insane speed with keyboard shortcuts. This leads to a boost in overall efficiency and performance.
+
+---
 
 ## Features
++ Tiling Window manager
++ Primarily Keyboard Based Navigation
++ Working Applications
++ Persistent User Sessions
++ Working Desktop Environment
++ File Support for image/videos/audio/text
++ Fully fledged Taskbar and TopBar
++ Full Personalization Features
++ Pannable Wallpapers (Panorama)
++ Animations and features
++ CLI with custom commands
 
-- **Window Management**: The web OS is set to tiling based by default but you can convert a tiled window into a floating window using Alt+Shift+T, windows that are floating can be retiled using the same command 
-- **File System**: The website also includes a simple barebone file system; you can create folders and files (only txt for now) edit them and save them (they are persistent as saved to local memory)
-- **Terminal**: There is a terminal with a bunch of unique commands to try out 
-- **Applications**:I have implemented File Manager, Text Editor, Browser, Camera, Settings, and more (A total of 7 all pinned to the taskbar by default)
-- **Customization**: I have also added several stock wallpapers so the user experience is not bland 
-- **Keyboard Shortcuts**: The entire project is based on efficiency and keyboard shortcuts so I might have missed some mouse features since shortcuts are the main focus 
-- **Persistent Storage**: All data saved to browser localStorage (I have not implemented any cap on the size of the .txt file so please dont crash your broswer!)
+---
 
-## Tech Stack
-
-- React 18
-- Vite
-- Tailwind CSS v4
-- react-icons
-- localStorage for persistence
-
-## Getting Started
-
+## Installation
+The demo is currently live at [Suprland](https://onkokain.github.io/webOS/)
+You can also locally clone the repo with:
 ```bash
+git clone https://github.com/Onkokain/webOS.git
+```
+
+---
+
+## Usage
+After cloning the repo:
+```bash
+cd webOS
 npm install
 npm run dev
 ```
 
-## A̶I̶ ̶U̶s̶a̶g̶e̶ ̶D̶i̶s̶c̶l̶o̶s̶u̶r̶e̶
+Then open your browser at:
+```bash
+http://localhost:5173
+```
 
-̶T̶h̶i̶s̶ ̶p̶r̶o̶j̶e̶c̶t̶ ̶w̶a̶s̶ ̶d̶e̶v̶e̶l̶o̶p̶e̶d̶ ̶w̶i̶t̶h̶ ̶A̶I̶ ̶a̶s̶s̶i̶s̶t̶a̶n̶c̶e̶ ̶i̶n̶ ̶t̶h̶e̶ ̶f̶o̶l̶l̶o̶w̶i̶n̶g̶ ̶c̶a̶p̶a̶c̶i̶t̶y̶:̶
+---
 
-̶-̶ ̶*̶*̶A̶I̶-̶A̶s̶s̶i̶s̶t̶e̶d̶*̶*̶:̶ ̶T̶h̶e̶ ̶i̶n̶i̶t̶i̶a̶l̶ ̶p̶r̶o̶j̶e̶c̶t̶ ̶s̶t̶r̶u̶c̶t̶u̶r̶e̶ ̶*̶w̶a̶s̶*̶ ̶b̶u̶i̶l̶t̶ ̶u̶s̶i̶n̶g̶ ̶A̶I̶
-̶-̶ ̶*̶*̶H̶a̶n̶d̶-̶W̶r̶i̶t̶t̶e̶n̶*̶*̶:̶ ̶A̶l̶l̶ ̶a̶p̶p̶l̶i̶c̶a̶t̶i̶o̶n̶ ̶l̶o̶g̶i̶c̶s̶,̶ ̶b̶a̶s̶i̶c̶ ̶j̶a̶v̶a̶ ̶s̶c̶r̶i̶p̶t̶ ̶a̶n̶d̶ ̶T̶a̶i̶l̶w̶i̶n̶d̶ ̶C̶S̶S̶ ̶c̶l̶a̶s̶s̶e̶s̶ ̶w̶e̶r̶e̶ ̶h̶a̶n̶d̶ ̶w̶r̶i̶t̶t̶e̶n̶
-̶-̶ ̶*̶*̶H̶a̶n̶d̶-̶D̶e̶b̶u̶g̶g̶e̶d̶*̶*̶:̶ ̶A̶l̶l̶ ̶b̶u̶g̶s̶ ̶a̶n̶d̶ ̶i̶s̶s̶u̶e̶s̶ ̶r̶e̶s̶o̶l̶v̶e̶d̶ ̶t̶h̶r̶o̶u̶g̶h̶ ̶m̶a̶n̶u̶a̶l̶ ̶d̶e̶b̶u̶g̶g̶i̶n̶g̶ ̶+̶ ̶A̶I̶ ̶w̶a̶s̶ ̶u̶s̶e̶d̶ ̶t̶o̶ ̶s̶i̶m̶p̶l̶i̶f̶y̶ ̶t̶h̶e̶ ̶c̶o̶d̶e̶ ̶a̶n̶d̶ ̶m̶a̶k̶e̶ ̶i̶t̶ ̶m̶o̶r̶e̶ ̶e̶a̶s̶i̶e̶r̶ ̶t̶o̶ ̶r̶e̶v̶i̶e̶w̶ ̶t̶o̶ ̶m̶a̶k̶e̶ ̶i̶t̶ ̶e̶a̶s̶i̶e̶r̶ ̶t̶o̶ ̶d̶e̶b̶u̶g̶ ̶i̶n̶ ̶t̶h̶e̶ ̶f̶u̶t̶u̶r̶e̶
+## Controls and Navigation
 
-̶N̶O̶T̶E̶:̶ ̶A̶I̶ ̶w̶a̶s̶ ̶u̶s̶e̶d̶ ̶t̶o̶ ̶b̶u̶i̶l̶d̶ ̶t̶h̶e̶ ̶1̶s̶t̶ ̶s̶o̶f̶t̶c̶o̶p̶y̶ ̶o̶f̶ ̶t̶h̶e̶ ̶w̶e̶b̶s̶i̶t̶e̶ ̶b̶u̶t̶ ̶t̶h̶e̶ ̶j̶s̶ ̶l̶o̶g̶i̶c̶s̶ ̶w̶e̶r̶e̶ ̶r̶e̶w̶r̶i̶t̶t̶e̶n̶ ̶a̶n̶d̶ ̶o̶p̶t̶i̶m̶i̶z̶e̶d̶ ̶b̶y̶ ̶h̶a̶n̶d̶.̶ ̶A̶L̶s̶o̶ ̶t̶h̶e̶ ̶c̶u̶s̶t̶o̶m̶ ̶C̶S̶S̶ ̶c̶l̶a̶s̶s̶e̶s̶ ̶w̶e̶r̶e̶ ̶w̶r̶i̶t̶t̶e̶n̶ ̶b̶y̶ ̶h̶a̶n̶d̶ ̶a̶n̶d̶ ̶a̶p̶p̶l̶i̶e̶d̶ ̶b̶y̶ ̶h̶a̶n̶d̶ ̶(̶e̶x̶c̶e̶p̶t̶ ̶d̶r̶a̶w̶i̶n̶g̶ ̶t̶h̶e̶ ̶b̶o̶x̶e̶s̶ ̶f̶o̶r̶ ̶c̶o̶n̶t̶e̶x̶t̶m̶e̶n̶u̶.̶j̶s̶x̶)
-NOTE: For V2 of this project NO AI was used to edit or change anything. I used google, various reddit postes, and tech stacks to find what was wrong with my project and fix bugs. (The only AI I used is; the autocomplete feature of VS code that completes files based on context; when it pops up)
+### Basic Navigation
+- Use keyboard shortcuts to navigate between windows
+- Focus switches instantly between tiles 
+- Keyboard shortcuts are highly recommned but mouse works as well
+
+---
+
+### Window Management
+- All windows are tiling-based
+- Opening a new window from taskbar and/or commands automatically splits the working space into tiles
+- Closing a window immediately causes the other active tabs to occupy the available space
+
+---
+
+## Keyboard Shortcuts
+
+### Desktop
+
+```text
+Middle Click Drag  : Move wallpaper
+Ctrl + Left Click  : Move widget
+Right Click        : Create new files/folders
+F2                 : Rename selected file/folder
+Ctrl + C           : Copy
+Ctrl + X           : Cut
+Ctrl + V           : Paste
+Delete             : Delete selected
+Shift + Click      : Multi-select
+Double Click       : Open file/folder
+```
+
+---
+
+### Windows
+
+```text
+Ctrl + Enter       : Open terminal
+Ctrl + N           : Open notepad
+Ctrl + C           : Open camera
+Ctrl + H           : Open help
+Ctrl + F           : Open file manager
+Ctrl + B           : Open browser
+Ctrl + S           : Open settings
+Ctrl + D           : Close focused window
+Middle Click       : Close window (title bar)
+Ctrl + Arrow Keys  : Change focused window
+```
+
+---
+
+### Terminal Commands
+
+```text
+help               : Show all commands
+echo <text>        : Print text
+date               : Show date and time
+whoami             : Current user
+hostname           : System hostname
+uname              : System info
+uptime             : Session uptime
+pwd                : Current directory
+cd <dir>           : Change directory
+ls [dir]           : List files
+mkdir <dir>        : Create directory
+touch <file>       : Create file
+cat <file>         : Read file
+rm <path>          : Delete file/folder
+history            : Command history
+cal                : Calendar
+env                : Environment variables
+color <color>      : Change text color
+browser <url>      : Open URL
+hackertype         : Fun typing mode
+heaven             : Easter egg
+clear / cls        : Clear terminal
+keybinds           : Edit keybinds
+```
+
+---
+
+### Notepad
+
+```text
+Ctrl + S           : Save note to desktop
+```
+
+---
+
+### Camera
+
+```text
+photo              : Take photo
+video              : Record video
+audio              : Record audio
+[save]             : Save capture
+[discard]          : Discard capture
+```
+
+---
+
+### File Manager
+
+```text
+Single Click       : Select file/folder
+Double Click       : Open file/folder
+Ctrl + Click       : Toggle selection
+Shift + Click      : Select range
+Delete             : Delete selected
+Ctrl + C           : Copy
+Ctrl + X           : Cut
+Ctrl + V           : Paste
+Right Click        : Context menu
+```
+
+---
+
+### Settings
+
+```text
+Wallpaper          : Change wallpaper
+Taskbar            : Configure position
+Personalize        : Customize UI
+System             : Reset user data
+```
+
+---
+
+## FAQ
+
+0. Naming
+Suprland* includes an asterisk representing limitless ambition within limitations.
+
+1. What is it?
+A tiling Web OS running entirely in the browser.
+
+2. Apps
+Use taskbar or keybinds.
+
+3. Windows
+Maximum 6 for usability balance.
+
+4. Files
+Stored in localStorage.
+
+5. Customization
+Wallpapers + themes available.
+
+6. Data
+Frontend only. No external storage.
+
+7. Mobile
+Not optimized yet.
+
+8. Open Source
+MIT licensed.
+
+9. Author
+Yaman.
+
+10. Contribution
+Mail: korahontoni@gmail.com
+
+11. Limitations
+Browser constraints.
+
+12. Future
+Continuous improvement.
+
+13. Offline
+Works after initial load.
+
+14. Reset
+Terminal or settings.
+
+17. Browser Support
+Most modern browsers supported.
+
+---
+
+## Final Note
+
+Suprland* is not trying to replace native operating systems. It's built to test the capabilities of the web and how far I can take a web based operating system.
+Also, if it exists it MUST run doom..
+
+---
