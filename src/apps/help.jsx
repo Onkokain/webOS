@@ -3,17 +3,29 @@ import Window from '../ui/window';
 const CONTENT = `SUPRLAND* — KEYBOARD SHORTCUTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-WINDOWS
-  ctrl + enter    :   open terminal
-  ctrl + n        :   open notepad
-  ctrl + c        :   open camera
-  ctrl + h        :   open help
-  ctrl + f        :   open file manager
-  ctrl + b        :   open browser
-  ctrl + s        :   open settings
-  ctrl + d        :   close focused window
-  ctrl + shift + f:   toggle float/tile window
-  middle click   :   close window
+DESKTOP:
+Middle Click Drag  : Move Wallpaper
+Ctrl + Left Click  : Move Widget
+Right Click        : Create New Files/Folders
+F2                 : Rename Selected File/Folder
+Ctrl + C           : Copy Selected Files/Folders
+Ctrl + X           : Cut Selected Files/Folders
+Ctrl + V           : Paste Files/Folders
+Delete             : Delete Selected Files/Folders
+Shift + Click      : Multi-select Files/Folders
+Double Click       : Open File/Folder
+
+WINDOWS:
+  Ctrl + enter    :   open terminal
+  Ctrl + n        :   open notepad
+  Ctrl + c        :   open camera
+  Ctrl + h        :   open help
+  Ctrl + f        :   open file manager
+  Ctrl + b        :   open browser
+  Ctrl + s        :   open settings
+  Ctrl + d        :   close focused window
+  middle click    :   close window (middle click on title bar)
+  Ctrl + arrow keys : change focused windows
 
 TERMINAL COMMANDS
   help               :   show all commands
@@ -33,14 +45,16 @@ TERMINAL COMMANDS
   history            :   show command history
   cal                :   print current month calendar
   env                :   print environment variables
-  color <color>      :   change text color (green|cyan|white|yellow|red|reset)
+  color <color>      :   change text color 
   browser <url>      :   open url in browser
   hackertype         :   type like a hacker
   heaven             :   easter egg
   clear / cls        :   clear terminal output
+  keybinds           :  edit default keybinds
+  
 
 NOTEPAD
-  ctrl + s        :   save note to desktop
+  Ctrl + s        :   save note to desktop
 
 CAMERA
   photo          :   take a photo
@@ -52,32 +66,20 @@ CAMERA
 FILE MANAGER
   single click   :   select file/folder
   double click   :   open file or navigate folder
-  ctrl + click   :   toggle selection
-  shift + click  :   select range
+  Ctrl + click   :   toggle selection
+  Shift + click  :   select range
   delete         :   delete selected files
-  ctrl + c       :   copy selected files
-  ctrl + x       :   cut selected files
-  ctrl + v       :   paste files
-  right click    :   context menu
-
-DESKTOP
-  single click   :   select icon
-  double click   :   open file/folder
-  drag icons     :   move icons
-  shift + drag   :   multi-select with band
-  delete         :   delete selected files
-  f2             :   rename selected file
-  ctrl + c       :   copy selected files
-  ctrl + x       :   cut selected files
-  ctrl + v       :   paste files
+  Ctrl + c       :   copy selected files
+  Ctrl + x       :   cut selected files
+  Ctrl + v       :   paste files
   right click    :   context menu
 
 SETTINGS
   wallpaper      :   change desktop wallpaper
   taskbar        :   configure taskbar position
-  auto-hide      :   toggle taskbar auto-hide
-  hidden apps    :   hide apps from taskbar
-  reset user     :   clear all data and restart`;
+  Personalize    :   customize size, color and font
+  System         :   Reset User Data
+`;
 
  export default function Help({ id, focused, onFocus, onClose }) {
   return (

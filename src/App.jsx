@@ -630,6 +630,7 @@ export default function App() {
         localStorage.removeItem('suprland-user');
         localStorage.removeItem('suprland-fs');
         localStorage.removeItem('suprland-settings')
+        localStorage.removeItem('suprland-keybinds');
         window.location.reload();
       };
 
@@ -800,7 +801,8 @@ useEffect(()=> {
 
 
   const startpan=(e)=> {
-    if (!isPannableWallpaper || e.button!==1){ return;}
+    const hasWindows=tree || floating.length > 0;
+    if (!isPannableWallpaper || e.button!==1 || hasWindows){ return;}
     e.preventDefault();
     setWppan(true);
 
@@ -917,7 +919,7 @@ useEffect(()=> {
             </motion.div>
           )}
         </AnimatePresence>
-
+        <AnimatePresence>
         {allIds.map(id => {
           const tiledWin = tiledWindows.find(w => w.id === id);
           const floatWin = floating.find(f => f.id === id);
@@ -980,6 +982,7 @@ useEffect(()=> {
 
           return null;
         })}
+        </AnimatePresence>
 
         {draggingId && dragPos && (() => {
           const win = tiledWindows.find(w => w.id === draggingId);

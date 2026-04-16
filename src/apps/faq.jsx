@@ -1,58 +1,58 @@
 import Window from '../ui/window';
 
-const faq_text=`FAQ
+const faq_text=`Welcome to Suprland FAQ!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0. Is it Suprland or Suprland*?
+-> The correct name is Suprland* (with an asterisk). The asterisk represents that the idea is create something limited yet limitless. A desktop environment that runs in a browser has many limations but my goal with this project is to overcome those limits and create a fun yet functional webiste.
+
 
 1. What is Suprland*?
--> Suprland* is a web-based desktop environment that mimics the look and feel of a traditional operating system. It allows you to open multiple windows, run apps, and manage files, all within your web browser.
+-> Suprland* is a tiling based Web OS, one of it's kind. It is a desktop environment running entirely on your browser with many fun features. It is heavily inspired by Hyprland, a tiling window manager in Linux. SUprland is meant to be my take on a tiling based OS, right here on the web.
 
 2. How do I open apps?
--> You can open apps using the keyboard shortcuts listed in the Help window, or by clicking on the app names in the center of the desktop.
+-> You can open apps using the taskbar at the bottom. Alternatively (and recommended), you can use the default keybinds to open and close apps quickly. Open the Help app for more information!
 
 3. Can I have multiple windows open at the same time?
--> Yes! You can open multiple windows and switch between them. Some apps are single-instance, meaning only one window can be open at a time (like Camera, Help, Settings, Files, and FAQ).
+-> You can have up to 6 windows open at the same time. Through ~30hours of total development, I have deemed 6 to be the perfect number for efficiency and actually being able to see what is going on on the screen.
 
 4. How do I manage files?
--> You can use the File Manager app to browse, create, delete, and manage files and folders. You can also open folders directly from the desktop.
+-> Any and all files you created currently go to the Desktop (also the File Manager). You can open they dirrectly from the Desktop or open the File Manager and open them from there. I currently have support built for .txt files, audio, video and images. This will surely be extended soon.
 
 5. Can I customize the desktop?
--> Currently, customization options are limited, but you can rearrange windows and manage your files as you like. Future updates may include more customization features.
+-> While being limited, there are a ton of fun backgrounds you can choose from! Open the settings app (Ctrl + S) and click on the wallpaper you deem worthy.
 
 6. Is my data saved?
--> Yes, your data is saved in the browser's local storage. This means that your files and settings will persist even if you refresh the page or close the browser, as long as you don't clear your browser data.
+-> Yes and No! I don't have access to any of your data, the website is PURELY frontend. But, all your files are stored in the browser's local storage, aka you'll still have access to all your files even if you reload the site or open and close it.
 
 7. Can I use this on mobile devices?
--> Suprland* is primarily designed for desktop browsers, and the user experience may not be optimal on mobile devices. For the best experience, we recommend using it on a desktop or laptop.
+-> Suprland* is built to be used on desktop devices. While the barebone features work on mobile as well the UI/UX has not been implemented for Mobile (yet). I recommend using Suprland* on desktop for the best user experience. That being said, nobody is stopping for from trying it out on mobile! Please go ahead and hit me will all your feedback and suggestions. Criticisms are much much appreciated.
 
 8. Is Suprland* open source?
--> Yes! Suprland* is open source and available on GitHub. Feel free to check out the code, contribute, or report any issues you find.
+-> Suprland* is 100% completely open source with a MIT license. Feel free to check it out, contribute to it, fork it or do anything you want with it!
 
 9. Who created Suprland*?
--> Suprland* was created by Baralekogyan, a software developer and designer. It is a passion project inspired by the desire to create a fun and functional web-based desktop environment.
+-> Uh if you're asking this, hi I'm Yaman, I created this as a fun project to learn and experiment with web development. 
 
 10. How can I contribute or report issues?
--> You can contribute to the project or report issues by visiting the GitHub repository. Contributions of all kinds are welcome, whether it's code, design, documentation, or bug reports.
+-> Hey if you're interested in helping please contact me at @korahontoni@gmail.com. Any feedback or suggestions are much appreciated! 
 
 11. Are there any known issues or limitations?
--> Yes, as a web-based application, Suprland* has some limitations compared to native operating systems. Performance may vary based on the browser and device, and some features may not work as smoothly as they would in a native environment. Additionally, certain apps may have limited functionality due to the constraints of running in a browser.
+-> Being a web based OS, there are more limitations than features but yet I've made clever workarounds for them. Worry not as when there's a will there's a way! 
 
 12. What are the future plans for Suprland*?
--> Future plans for Suprland* include adding more apps, improving performance, enhancing customization options, and implementing new features based on user feedback. The project is actively being developed, so stay tuned for updates!
+-> We live in the present, why worry about the future? Suprland* is in the present and it's development will be in the present; new features, bug fixes and improvements everyday!
 
 13. Can I use Suprland* offline?
--> Yes, once you have loaded Suprland* in your browser, you can use it offline. All data is stored locally in your browser's storage, so you can continue to work with your files and apps even without an internet connection.
+-> Load it once, use it forever. Nothing more nothing less.
 
 14. How do I reset Suprland* to its default state?
--> If you want to reset Suprland* to its default state, you can clear your browser's local storage for the site. This will remove all your files, settings, and app data, giving you a fresh start. Please note that this action is irreversible, so make sure to back up any important data before proceeding.
+-> Open terminal and type 'reset confirm'. Optionally, open Settings, navigate to System and click on Reset User Data.
 
-15. Can I change the appearance of Suprland*?
--> Currently, there are no built-in options to change the appearance of Suprland*. However, since Suprland* is open source, you can modify the CSS and design elements to customize the look and feel to your liking. Future updates may also include more built-in customization options.
-
-16. Is there a way to export my files from Suprland*?
--> Yes, you can export your files from Suprland* by using the File Manager app. Simply select the files you want to export and use the copy or cut functionality, then paste them into a location on your computer. Alternatively, you can also access the files directly from your browser's local storage if you know where to look.
 
 17. Can I use Suprland* on different browsers?
--> Suprland* is designed to work on modern web browsers that support HTML5, CSS3, and JavaScript. It should work on popular browsers like Chrome, Firefox, Edge, and Safari. However, performance and compatibility may vary depending on the browser and its version. For the best experience, we recommend using the latest version of your preferred browser.
+-> Suprland* supports most, if not all browsers that have HTML5 and modern JS support. I natively run Comet (A Chromium based browser) and it works perfectly. Please let me know if you encounter any browser specific issues!
+
+More questions? I'm always available to answer them! Contact me at @korahontoni@gmail.com and Finally thank you for using Suprland*! I hope you have as much fun using it as I had building it!
 
 `
 

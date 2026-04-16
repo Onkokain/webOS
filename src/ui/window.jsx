@@ -1,4 +1,11 @@
+import {motion} from 'framer-motion';
+
+
+
 export default function Window({ id, title, focused, onFocus, onClose, children }) {
+
+
+
   const handleMouseDown = () => {
     onFocus(id);
   };
@@ -12,10 +19,18 @@ export default function Window({ id, title, focused, onFocus, onClose, children 
   const focusIndicator = focused ? ' • focused' : '';
   
   return (
-    <div onMouseDown={handleMouseDown}
+    <motion.div 
+      initial={{opacity:0, scale:0.9}}
+      animate={{opacity:1,scale:1}}
+      exit={{opacity:0, scale:0.9}}
+      transition={{duration:0.15}}
+      layout
+      onMouseDown={handleMouseDown}
       className={`flex h-full w-full flex-col overflow-hidden border-2 rounded-3xl bg-[#0a0a0f] transition-colors duration-200 relative ${borderColor}`}
       style={{ backdropFilter: 'blur(10px)', containerType: 'size' }}
+
     >
+      
       <div 
       onMouseDown={(e) => {
         if (e.button===1) {
@@ -45,6 +60,6 @@ export default function Window({ id, title, focused, onFocus, onClose, children 
         </span>
       </div>
       {children}
-    </div>
+    </motion.div>
   );
 }
