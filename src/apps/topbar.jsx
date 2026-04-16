@@ -25,7 +25,12 @@ export default function Topbar({openwindow, setBrowserUrl,user}) {
     >FAQ</div>
     <div className='hover:scale-[1.2] cursor-pointer'
      onClick={() =>openwindow('help')}>Help</div>
-    <div className='hover:scale-[1.2] cursor-pointer'>GitHub</div>
+    <div className='hover:scale-[1.2] cursor-pointer'
+    onClick={()=>{
+        setBrowserUrl('https://playclassic.games/games/first-person-shooter-dos-games-online/play-doom-online/play/');
+        openwindow('browser');
+      }}
+    >DOOM</div>
   </div>
 </div>
 )}
