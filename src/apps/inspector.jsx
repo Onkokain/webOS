@@ -942,10 +942,6 @@ useEffect(()=> {
                     setActiveId(id);
                     onTileHeaderTouchHold(e,id);
                 }}
-                onMouseDown={e => {
-                    setActiveId(id);
-                    onTileHeaderMouseDown(e, id);
-                }}
                 className="absolute z-20 p-1"
                 style={{
                   left: `calc(${leftOffset}px + (100vw - ${totalReservedWidth}px) * ${tiledWin.bounds.x / 100})`,
@@ -997,14 +993,13 @@ useEffect(()=> {
           const w = (win.bounds.w / 100) * W;
           const h = (win.bounds.h / 100) * H;
           return (
-            <div className="pointer-events-none fixed z-[100]" style={{ left: dragPos.x - w / 2, top: dragPos.y - 16, width: w, height: h, opacity: 0.75, transform: 'scale(0.7)', transformOrigin: 'top center' }}>
+            <div className="pointer-events-none fixed z-[100]" style={{ left: dragPos.x - w / 2, top: dragPos.y - 16, width: w, height: h, opacity: 0.75, transform: 'scale(1.04)', transformOrigin: 'top center' }}>
               <div className="w-full h-full rounded-3xl border-2 border-cyan-400 bg-[#0a0a0f] flex items-center justify-center" style={{ backdropFilter: 'blur(10px)' }}>
                 <span className="font-mono text-cyan-400 text-sm tracking-widest">{registry[draggingId]}</span>
               </div>
             </div>
           );
         })()}
-
       </div>
         <Taskbar onOpen={openWindow} openKinds={allKinds} settings={settings} />
 

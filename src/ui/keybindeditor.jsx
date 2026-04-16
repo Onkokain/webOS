@@ -3,11 +3,11 @@ import { useEffect,useState } from "react";
 export default function KeybindEditor({keybinds,setKeybinds,onClose}){
     const [buffer,setBuffer]=useState('');
     const [isDirty,setIsDirty]=useState(false);
-    
+
     useEffect(()=> {
         const formatKeybinds=() => {
-            let text='#Suprland Keybinds\n';
-            text+='# Press Alt+S to Save, Alt+X to Exit\n';
+            let text='';
+            text+='';
 
             for (const action in keybinds) {
                 const kb=keybinds[action];
@@ -68,9 +68,13 @@ export default function KeybindEditor({keybinds,setKeybinds,onClose}){
     },[buffer,onClose]);
 
     return(
-        <div className="absolute inset-0 bg-blue-900/95 z-[100] flex flex-col font-mono">
-            <div className="bg-gray-200 text-black px-2 py-1 flex justify-between">
-                <span>Suprland Keybind Editor</span>
+        <div className="absolute border border-blue rounded-sm inset-0 bg-black/95 z-[100] flex flex-col font-mono">
+            <div className="bg-black text-black px-2 py-1 flex justify-between flex-col">
+                <div className='w-full items-center justify-center flex '>Suprland Keybind Editor</div>
+                <span>‎ </span>
+                <span>#Suprland Keybinds</span>
+                <span># Press Alt+S to Save, Alt+X to Exit</span>
+
                 <span>{isDirty ? '(modified)' : ''}</span>
             </div>
             <textarea
@@ -83,7 +87,7 @@ export default function KeybindEditor({keybinds,setKeybinds,onClose}){
                 spellCheck={false}
                 autoComplete='off'
             />
-            <div className="bg-gray-200 text-black px-2 py-1 flex gap-4">
+            <div className="bg-black text-black px-2 py-1 flex gap-4">
                 <span>Alt+S Save</span>
                 <span>Alt+X Exit</span>
             </div>
