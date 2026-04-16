@@ -77,8 +77,10 @@ function RenameInput({ name, onDone }) {
   );
 }
 
-export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete,openwindow,setBrowserUrl }) {
+export default function Desktop({ fs, setFs, user, onOpenFolder, onDelete,openwindow,setBrowserUrl,wppan }) {
   
+
+
   const [ctrlPressed, setCtrlPressed] = useState(false);
 
   useEffect(() => {
@@ -524,11 +526,10 @@ const handleWidgetMouseDown=(e)=>{
       
       <div
         onMouseDown={handleWidgetMouseDown}
-        className={`absolute w-40 p-4 border-gray-700 rounded-lg ${ctrlPressed && !DraggingWidget? 'cursor-grab' : ctrlPressed && DraggingWidget ? 'cursor-grabbing': ''} z-30`}
+        className={`absolute w-40 p-4 border-gray-700 rounded-lg scale-150 md:scale-270 ${ctrlPressed && !DraggingWidget? 'cursor-grab' : ctrlPressed && DraggingWidget ? 'cursor-grabbing': ''} z-30`}
         style={{
           left:widgetPos.x,
           top:widgetPos.y,
-          transform:'scale(2.7)'
         }}
       >
         <div className='font-mono text-sm text-gray-100 text-center font-bold mb-2 '>

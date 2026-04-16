@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { defaultKeybinds } from "./utils/keybinds";
 import {
   createLeaf,
   countLeaves,
@@ -21,6 +22,7 @@ import Browser from './apps/browser';
 import Settings from './apps/settings';
 import Faq from './apps/faq';
 import Topbar from './apps/topbar';
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 const TOTAL_WINDOWS = 6;
 const BOUNDS = { x: 0, y: 0, w: 100, h: 100 };
@@ -41,6 +43,10 @@ function swapIds(node, idA, idB) {
 
 
 export default function App() {
+
+  const [keybinds,setKeybinds]=useLocalStorage('suprland-keybinds', defaultKeybinds);
+
+  
 
   useEffect(() => {
     const handleClick=() => {
@@ -533,96 +539,74 @@ export default function App() {
   },[wppan])
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      const ctrlKeyPressed = event.ctrlKey;
+    const handleKeyDown = (e) => {
 
-      if (ctrlKeyPressed) {
-        const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-        if (arrowKeys.includes(event.key)) {
-          event.preventDefault();
+      if (e.ctrlKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+            const focusable = [
+               ...collectLeaves(tree, BOUNDS, null).map(w => w.id),
+              ...floating.map(f => f.id),
+            ];
 
-          const focusable=[
-            ...tiledWindows.map(w=>w.id),
-            ...floating.map(f=>f.id),
-          ]
+            if (focusable.length === 0) return;
 
-          if (focusable.length===0){ return;}
+            const currentIndex = focusable.indexOf(activeId);
+            const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+            let nextIndex = safeIndex;
 
-          const currentIndex=focusable.indexOf(activeId);
-          const safeIndex=currentIndex===-1 ? 0 : currentIndex // safety check to ensure activeid is in bounds
-
-          let nextIndex=safeIndex;
-
-          if (event.key==='ArrowRight' || event.key==='ArrowDown'){
-            nextIndex=(safeIndex+1)%focusable.length;
-          }
-
-          if (event.key==='ArrowLeft' || event.key==='ArrowUp'){
-            nextIndex=(safeIndex-1+focusable.length)%focusable.length;
-          }
-
-          setActiveId(focusable[nextIndex]);
-          return;
-        
-        }
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+               nextIndex = (safeIndex + 1) % focusable.length;
+              } 
+            else {
+                  nextIndex = (safeIndex - 1 + focusable.length) % focusable.length;
+                  }
+            setActiveId(focusable[nextIndex]);
+            return;
       }
-      
-      if (!ctrlKeyPressed) {
-        return;
-      }
-      
-      const key = event.key.toLowerCase();
-      const shiftKeyPressed = event.shiftKey;
-      
-      if (shiftKeyPressed && key === 'f') {
-        event.preventDefault();
-        
-        if (activeId == null) {
-          return;
-        }
-        
-        const isCurrentWindowFloating = floating.some(floatWindow => floatWindow.id === activeId);
-        
-        if (isCurrentWindowFloating) {
-          tileWindow(activeId);
-        } else {
-          floatWindow(activeId);
-        }
-        
-        return;
-      }
-      
-      const keyToAppMap = {
-        enter: 'cli',
-        n: 'notepad',
-        c: 'camera',
-        h: 'help',
-        f: 'files',
-        b: 'browser',
-        s: 'settings',
-        q: 'faq',
+
+      const action=Object.keys(keybinds).find(action => {
+        const kb=keybinds[action];
+        return e.key.toLowerCase()===kb.key.toLowerCase() &&
+               e.ctrlKey===!!kb.ctrlKey &&
+               e.shiftKey===!!kb.shiftKey &&
+               e.altKey===!!kb.altKey;
+      });
+
+      if (!action) return;
+
+      e.preventDefault();
+
+      const appMap={
+            open_terminal: 'cli',
+            open_notepad: 'notepad',
+            open_camera: 'camera',
+            open_help: 'help',
+            open_files: 'files',
+            open_browser: 'browser',
+            open_settings: 'settings',
+            open_faq: 'faq',
       };
-      
-      const appToOpen = keyToAppMap[event.key.toLowerCase()];
-      const isEnterKey = event.key === 'Enter';
-      
-      if (appToOpen || isEnterKey) {
-        event.preventDefault();
-        openWindow(appToOpen ?? 'cli');
+
+      if (appMap[action]) {
+        openWindow(appMap[action]);
       }
-      
-      if (key === 'd') {
-        event.preventDefault();
-        
-        if (activeId != null) {
-          closeWindow(activeId);
+      else if (action==='close_window' && activeId!==null) {
+        closeWindow(activeId);
+      }
+      else if (action==='toggle_float' && activeId!==null) {
+        const isFloating=floating.some(f=> f.id===activeId);
+        if (isFloating) {
+          tileWindow(activeId);
+        }
+        else {
+          floatWindow(activeId);
         }
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeId, tree, floating]);
+  }, [keybinds,activeId, tree, floating]);
 
   const tiledWindows = collectLeaves(tree, BOUNDS, activeId);
   const allKinds = [...tiledWindows.map(w => w.kind), ...floating.map(f => f.kind)];
@@ -714,6 +698,9 @@ export default function App() {
         onOpenApp={handleOpenApp}
         settings={settings}
         reset={handleResetUser}
+        setKeybinds={setKeybinds}
+        keybinds={keybinds}
+
       />
     );
   };
@@ -728,6 +715,89 @@ export default function App() {
   const videoSrc=isVidWallpaper? settings.wallpaper.replace('video:','') : '';
 
   const clamp=(value,min,max)=> Math.min(Math.max(value,min),max);
+
+  const [touchPan,setTouchPan]=useState(false)
+
+
+  // let touchStartX,touchStartY,touchStartTime;
+  
+  //   Element.addEventListener('touchstart', (e) => {
+  //     touchStartX=e.touches[0].clientX;
+  //     touchStartY=e.touches[0].clientY;
+  //     touchStartTime=Date.now();
+  //   });
+  
+  //   Element.addEventListener('touchmove', (e) => {
+  //     const dx=e.changedTouches[0].clientX - touchStartX;
+  //     const dy=e.changedTouches[0].clientY - touchStartY;
+  //     const dt=Math.sqrt(dx*dx + dy*dy);
+  
+  //     if (dt>10) {
+  //       // handle dragging
+  //     }
+  //   })
+  
+  //   Element.addEventListener('touchend', (e) => {
+  //     const duration=Date.now() - touchStartTime;
+  //     const dx=e.changedTouches[0].clientX - touchStartX;
+  //     const dy=e.changedTouches[0].clientY - touchStartY;
+  //     const dt=Math.sqrt(dx*dx + dy*dy);
+      
+  //     if(dt<10 && duration<200) { 
+  //       // handle tap
+  //     }
+  //     else if (dt>10) {
+  //       // handle drag
+  //     }
+  
+  //   })
+
+  const startTouchPan=(e) => {
+    if (!isPannableWallpaper || e.touches.length!==1){ return;}
+
+    setTouchPan(true);
+
+    panref.current= {
+      startX:e.touches[0].clientX,
+      startY:e.touches[0].clientY,
+      origX:wpoffset.x,
+      origY:wpoffset.y,
+    }
+  }
+
+useEffect(()=> {
+  if (!touchPan){ return;}
+
+  const onMove=(e)=> {
+    if (!panref.current) { return;}
+
+    const dx=e.touches[0].clientX-panref.current.startX;
+    const dy=e.touches[0].clientY-panref.current.startY;
+    const speed=0.09;
+
+    setWpoffset({
+      x: clamp(panref.current.origX-dx*speed,0,100),
+      y:clamp(panref.current.origY-dy*speed,0,100),
+    })
+  }
+
+  const onEnd=() => {
+    setTouchPan(false);
+    panref.current=null;
+  }
+
+  window.addEventListener('touchmove',onMove);
+  window.addEventListener('touchend', onEnd);
+
+  return () => {
+    window.removeEventListener('touchmove', onMove);
+    window.removeEventListener('touchend', onEnd);
+  }
+
+},[touchPan])
+
+
+
 
   const startpan=(e)=> {
     if (!isPannableWallpaper || e.button!==1){ return;}
@@ -788,6 +858,7 @@ export default function App() {
 </div>
       <div 
       ref={screenRef} 
+      onTouchStart={startTouchPan}
       onMouseDown={startpan}
       onAuxClick={(e)=> {
         if (e.button===1) e.preventDefault();
@@ -834,7 +905,7 @@ export default function App() {
                 left: settings.taskbarPos === 'left' && !settings.autoHide ? `${taskbarWidth}px` : '0',
                 right: settings.taskbarPos === 'right' && !settings.autoHide ? `${taskbarWidth}px` : '0',
               }}>
-              <Desktop fs={fs} setFs={setFs} user={user} openwindow={openWindow} setBrowserUrl={setBrowserUrl} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
+              <Desktop fs={fs} setFs={setFs} user={user} openwindow={openWindow} setBrowserUrl={setBrowserUrl} setWppan={setWppan} onOpenFolder={path => { setFmPath(path); openWindow('files'); }}
                 onDelete={(path) => { 
                   setFs(prev => { 
                     const n = { ...prev }; 

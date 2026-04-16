@@ -1,6 +1,7 @@
 import { useEffect, useState,useRef } from "react";
 import Window from '../ui/window';
 import {fsDelete} from '../utils/fsUtils';
+import KeybindEditor from "../ui/keybindeditor";
 const HOST='Suprland';
 
 const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory, filesystem, setFilesystem) => {
@@ -172,6 +173,10 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             return ['__CLOSE__']
         }
 
+        case 'keybinds': {
+            return ['__KEYBINDS__',]
+        }
+
         case 'env': {
             return [
                 `USER=${user}`,
@@ -198,6 +203,7 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             if (!commandArguments || commandArguments !== 'confirm')  return ['This will reset all user data. Type "reset confirm" to proceed.'];
             return ['__RESET__']
         }
+       
 
         case 'sudo': {
             return ['nice try but it ain\'t happening'];
@@ -218,11 +224,17 @@ const BOOT= (user) => [
     {k: 'dim', t:'-'.repeat(44)},
 ];
 
-export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,settings,reset}) {
+export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,settings,reset,setKeybinds,keybinds}) {
+
+    const [isEditingKeybinds,setIsEditingKeybinds]=useState(false);
+
     const [fontSize,setFontSize]=useState(14);
     const root=`/home/${user}/`;
     const [input,setInput]=useState('');
     const [history,setHistory]=useState(BOOT(user));
+
+  
+
     const [cmdHistory,setCmdHistory]=useState(() => {
         const saved = localStorage.getItem(`suprland-cmd-history-${user}`);
         return saved ? JSON.parse(saved) : [];
@@ -245,8 +257,8 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
 
     const submit=(e) => {
         e.preventDefault();
+        let cmd=input.trim();
         if (hackerActive) return;
-        const cmd=input.trim();
         if (!cmd) return;
         const out=run(cmd,user,cwd,setCwd,fs,setFs);
 
@@ -262,6 +274,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 ...cmdHistory.map((c,i) => ({k : 'out', t: ` ${cmdHistory.length-i} ${c}`}))
             ]);
         }
+
+        else if (out[0]==='__KEYBINDS__') {
+            setIsEditingKeybinds(true);
+        }
+
         else if (out[0]==='__HACKERTYPE__') {
             setHistory((h) => [...h, {k: 'prompt', t: `${user}@${HOST}:${shortCwd}$ ${cmd}`}]);
             setOutputColor('text-green-400');
@@ -298,6 +315,8 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 
             
         }
+
+
         else if (out[0]?.startsWith('__BROWSER__:')) {
             const url = out[0].slice('__BROWSER__:'.length);
             onOpenApp?.('browser', url);
@@ -394,7 +413,15 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 />
             </form>
             </Window>
-        
+            {isEditingKeybinds && (
+                <KeybindEditor
+                    keybinds={keybinds}
+                    setKeybinds={setKeybinds}
+                    onClose={() => setIsEditingKeybinds(false)}
+                />
+                
+                
+            )}
         
         </>
     )

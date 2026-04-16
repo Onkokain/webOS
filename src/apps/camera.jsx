@@ -1,9 +1,19 @@
 import {useEffect, useRef, useState} from 'react';
 import Window from '../ui/window';
 
-function AudioVisualizer({ stream }) {
+function AudioVisualizer({ stream,recording }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
+  const [color,setColor] = useState('gray');
+
+  const smoothItRef=useRef(new Array(200).fill(0));
+
+  useEffect(() => {
+    setColor(recording ? 'red' : 'gray');
+
+  },[recording])
+
+  
 
   useEffect(() => {
     if (!stream) {
@@ -34,25 +44,54 @@ function AudioVisualizer({ stream }) {
       context.clearRect(0, 0, canvasWidth, canvasHeight);
       analyser.getByteFrequencyData(frequencyData);
       
-      const barCount = 14;
+      const barCount = 200;
       const barGap = 3;
       const barWidth = (canvasWidth - barGap * (barCount - 1)) / barCount;
       
       for (let barIndex = 0; barIndex < barCount; barIndex++) {
         const dataIndex = Math.floor(barIndex * frequencyData.length / barCount);
-        const normalizedValue = frequencyData[dataIndex] / 255;
-        const barHeight = Math.max(3, normalizedValue * canvasHeight * 0.85);
+        const normalizedValue = Math.pow(frequencyData[dataIndex] / 255, 0.2);
+
+        const smoothed=smoothItRef.current;
+        smoothed[barIndex]=smoothed[barIndex]*0.7 + normalizedValue*0.3;
+        const barHeight = Math.max(3, smoothed[barIndex] * canvasHeight * 0.85);
         
-        context.fillStyle = 'blue';
+        const gradient=context.createLinearGradient(0,(canvasHeight - barHeight) / 2,0, (canvasHeight + barHeight) / 2);
+        gradient.addColorStop(0, color === 'red' ? '#ff6b6b' : '#94a3b8');
+        gradient.addColorStop(1, color === 'red' ? '#dc2626' : '#64748b');
+        
+
+        context.fillStyle = color;
+        context.shadowBlur=10;
+        context.shadowColor=color;
         context.beginPath();
-        context.roundRect(
-          barIndex * (barWidth + barGap),
-          (canvasHeight - barHeight) / 2,
-          barWidth,
-          barHeight,
-          2
-        );
-        context.fill();
+        // context.roundRect(
+        //   barIndex * (barWidth + barGap),
+        //   (canvasHeight - barHeight) / 2,
+        //   barWidth,
+        //   barHeight,
+        //   2
+        // );
+
+        if (barIndex === 0) {
+          context.beginPath();
+          context.moveTo(0,(canvasHeight - barHeight) / 2);
+        
+        }
+        else {
+          context.lineTo(
+            barIndex * (barWidth + barGap)+barWidth/2,
+            (canvasHeight - barHeight) / 2
+        )
+        }
+
+        if (barIndex === barCount - 1) {
+          context.lineWidth=2;
+          context.lineCap='round';
+          context.lineJoin='round';
+          context.stroke();
+        }
+        
       }
     };
     
@@ -62,7 +101,7 @@ function AudioVisualizer({ stream }) {
       cancelAnimationFrame(animationRef.current);
       audioContext.close();
     };
-  }, [stream]);
+  }, [stream,color]);
 
   return <canvas ref={canvasRef} className='w-full h-full' />
 }
@@ -225,7 +264,7 @@ export default function Camera({ id, focused, onFocus, onClose, onSave }) {
           {mode === 'audio' ? (
             <div className='w-full h-full col center gap-4 px-6'>
               <div className='w-full h-[80px]'>
-                <AudioVisualizer stream={streamRef.current} />
+                <AudioVisualizer stream={streamRef.current} recording={recording} />
               </div>
               {recording && (
                 <span className='font-mono text-[10px] text-gray-500 tracking-widset'>
