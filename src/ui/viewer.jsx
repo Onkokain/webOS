@@ -1,27 +1,27 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
 
 function Viewer({ file, onClose }) {
   const handleBackdropClick = () => {
     onClose();
   };
-  
+
   const handleContentClick = (event) => {
     event.stopPropagation();
   };
-  
-  const isPhoto = file.kind === 'photo';
-  const isVideo = file.kind === 'video';
-  const isAudio = file.kind === 'audio';
+
+  const isPhoto = file.kind === "photo";
+  const isVideo = file.kind === "video";
+  const isAudio = file.kind === "audio";
   const isTextFile = !file.kind;
   const fileContent = file.text || <span className="text-gray-700">empty</span>;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-30 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
       onClick={handleBackdropClick}
     >
       <motion.div
@@ -44,7 +44,10 @@ function Viewer({ file, onClose }) {
         </div>
         <div className="flex-1 overflow-auto flex items-center justify-center bg-black p-2">
           {isPhoto && (
-            <img src={file.url} className="max-h-full max-w-full object-contain" />
+            <img
+              src={file.url}
+              className="max-h-full max-w-full object-contain"
+            />
           )}
           {isVideo && (
             <video src={file.url} controls className="max-h-full max-w-full" />

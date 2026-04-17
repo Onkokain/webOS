@@ -1,6 +1,6 @@
-import Window from '../ui/window';
+import Window from "../ui/window";
 
-const faq_text=`Welcome to Suprland FAQ!
+const faq_text = `Welcome to Suprland FAQ!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 0. Is it Suprland or Suprland*?
 -> The correct name is Suprland* (with an asterisk). The asterisk represents that the idea is create something limited yet limitless. A desktop environment that runs in a browser has many limations but my goal with this project is to overcome those limits and create a fun yet functional webiste.
@@ -54,16 +54,19 @@ const faq_text=`Welcome to Suprland FAQ!
 
 More questions? I'm always available to answer them! Contact me at @korahontoni@gmail.com and Finally thank you for using Suprland*! I hope you have as much fun using it as I had building it!
 
-`
+`;
 
-
- export default function Help({ id, focused, onFocus, onClose }) {
+export default function Help({ id, focused, onFocus, onClose }) {
   return (
-    <Window id={id} title="FAQ" focused={focused} onFocus={onFocus} onClose={onClose}>
+    <Window
+      id={id}
+      title="FAQ"
+      focused={focused}
+      onFocus={onFocus}
+      onClose={onClose}
+    >
       <pre className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-gray-400 text-xs hide-scroll overflow-x-auto text-wrap">
-
-{faq_text}
-        
+        {faq_text}
       </pre>
     </Window>
   );

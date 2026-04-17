@@ -1,4 +1,4 @@
-import Window from '../ui/window';
+import Window from "../ui/window";
 
 const CONTENT = `SUPRLAND* — KEYBOARD SHORTCUTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -81,9 +81,15 @@ SETTINGS
   System         :   Reset User Data
 `;
 
- export default function Help({ id, focused, onFocus, onClose }) {
+export default function Help({ id, focused, onFocus, onClose }) {
   return (
-    <Window id={id} title="help" focused={focused} onFocus={onFocus} onClose={onClose}>
+    <Window
+      id={id}
+      title="help"
+      focused={focused}
+      onFocus={onFocus}
+      onClose={onClose}
+    >
       <pre className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-gray-400 text-xs hide-scroll">
         {CONTENT}
       </pre>

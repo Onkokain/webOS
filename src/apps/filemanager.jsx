@@ -1,14 +1,23 @@
-import { useState, useEffect } from 'react';
-import Window from '../ui/window';
-import FileViewer from '../ui/viewer';
-import ContextMenu from '../ui/contextmenu';
-import TextEditor from '../ui/texteditor';
-import { getIcon } from '../ui/icons';
-import { fsDelete, fsNextName, fsCopy } from '../utils/fsUtils';
+import { useState, useEffect } from "react";
+import Window from "../ui/window";
+import FileViewer from "../ui/viewer";
+import ContextMenu from "../ui/contextmenu";
+import TextEditor from "../ui/texteditor";
+import { getIcon } from "../ui/icons";
+import { fsDelete, fsNextName, fsCopy } from "../utils/fsUtils";
 
-export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, user, initialPath }) {
+export default function FileManager({
+  id,
+  focused,
+  onFocus,
+  onClose,
+  fs,
+  setFs,
+  user,
+  initialPath,
+}) {
   const root = `/home/${user}/`;
-  
+
   const [cwd, setCwd] = useState(initialPath || root);
   const [viewing, setViewing] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -16,35 +25,37 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
   const [selected, setSelected] = useState(new Set());
   const [clipboard, setClipboard] = useState(null);
 
-  const entries = Object.keys(fs).filter(key => {
+  const entries = Object.keys(fs).filter((key) => {
     if (key === cwd) return false;
     const relative = key.slice(cwd.length);
-    return key.startsWith(cwd) && relative.split('/').filter(Boolean).length === 1;
+    return (
+      key.startsWith(cwd) && relative.split("/").filter(Boolean).length === 1
+    );
   });
 
-  const getEntryName = (path) => path.slice(cwd.length).replace(/\/$/, '');
-  const isDirectory = (path) => fs[path]?.type === 'dir';
+  const getEntryName = (path) => path.slice(cwd.length).replace(/\/$/, "");
+  const isDirectory = (path) => fs[path]?.type === "dir";
 
   const saveFs = (updater) => {
-    setFs(prev => {
+    setFs((prev) => {
       const updated = updater(prev);
-      localStorage.setItem('suprland-fs', JSON.stringify(updated));
+      localStorage.setItem("suprland-fs", JSON.stringify(updated));
       return updated;
     });
   };
 
   const navigateUp = () => {
     if (cwd === root) return;
-    const parts = cwd.slice(0, -1).split('/').filter(Boolean);
+    const parts = cwd.slice(0, -1).split("/").filter(Boolean);
     parts.pop();
-    setCwd('/' + parts.join('/') + '/');
+    setCwd("/" + parts.join("/") + "/");
     setSelected(new Set());
   };
 
   const deleteSelected = () => {
-    saveFs(prev => {
+    saveFs((prev) => {
       let updated = { ...prev };
-      [...selected].forEach(path => {
+      [...selected].forEach((path) => {
         updated = fsDelete(updated, path);
       });
       return updated;
@@ -54,35 +65,36 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
   };
 
   const copyFiles = () => {
-    setClipboard({ paths: [...selected], op: 'copy' });
+    setClipboard({ paths: [...selected], op: "copy" });
     setMenu(null);
   };
 
   const cutFiles = () => {
-    setClipboard({ paths: [...selected], op: 'cut' });
+    setClipboard({ paths: [...selected], op: "cut" });
     setMenu(null);
   };
 
   const pasteFiles = () => {
     if (!clipboard) return;
 
-    saveFs(prev => {
+    saveFs((prev) => {
       let updated = { ...prev };
 
-      clipboard.paths.forEach(path => {
-        const fullName = path.split('/').filter(Boolean).pop();
-        const isDir = prev[path]?.type === 'dir';
-        const ext = !isDir && fullName.includes('.') 
-          ? '.' + fullName.split('.').pop() 
-          : '';
-        const base = ext 
-          ? fullName.slice(0, fullName.length - ext.length) 
+      clipboard.paths.forEach((path) => {
+        const fullName = path.split("/").filter(Boolean).pop();
+        const isDir = prev[path]?.type === "dir";
+        const ext =
+          !isDir && fullName.includes(".")
+            ? "." + fullName.split(".").pop()
+            : "";
+        const base = ext
+          ? fullName.slice(0, fullName.length - ext.length)
           : fullName;
-        const dest = fsNextName(updated, cwd, base, ext) + (isDir ? '/' : '');
+        const dest = fsNextName(updated, cwd, base, ext) + (isDir ? "/" : "");
 
         updated = fsCopy(updated, path, dest);
 
-        if (clipboard.op === 'cut') {
+        if (clipboard.op === "cut") {
           updated = fsDelete(updated, path);
         }
       });
@@ -95,14 +107,14 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
   };
 
   const createNewFile = () => {
-    const newPath = fsNextName(fs, cwd, 'file', '.txt');
-    saveFs(p => ({ ...p, [newPath]: { type: 'file', text: '' } }));
+    const newPath = fsNextName(fs, cwd, "file", ".txt");
+    saveFs((p) => ({ ...p, [newPath]: { type: "file", text: "" } }));
     setMenu(null);
   };
 
   const createNewFolder = () => {
-    const newPath = fsNextName(fs, cwd, 'folder') + '/';
-    saveFs(p => ({ ...p, [newPath]: { type: 'dir' } }));
+    const newPath = fsNextName(fs, cwd, "folder") + "/";
+    saveFs((p) => ({ ...p, [newPath]: { type: "dir" } }));
     setMenu(null);
   };
 
@@ -110,7 +122,7 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
     e.stopPropagation();
 
     if (e.ctrlKey || e.metaKey) {
-      setSelected(prev => {
+      setSelected((prev) => {
         const next = new Set(prev);
         if (next.has(path)) {
           next.delete(path);
@@ -123,9 +135,8 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
       const lastSelected = [...selected][selected.size - 1];
       const lastIdx = entries.indexOf(lastSelected);
       const currIdx = entries.indexOf(path);
-      const [start, end] = lastIdx < currIdx 
-        ? [lastIdx, currIdx] 
-        : [currIdx, lastIdx];
+      const [start, end] =
+        lastIdx < currIdx ? [lastIdx, currIdx] : [currIdx, lastIdx];
       setSelected(new Set(entries.slice(start, end + 1)));
     } else {
       setSelected(new Set([path]));
@@ -140,25 +151,25 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
       return;
     }
 
-    if (fs[path].type === 'file') {
+    if (fs[path].type === "file") {
       setEditing({
         path,
         name: getEntryName(path),
-        text: fs[path].text || ''
+        text: fs[path].text || "",
       });
       return;
     }
 
     setViewing({
       name: getEntryName(path),
-      ...fs[path]
+      ...fs[path],
     });
   };
 
   const handleEditSave = (file) => {
-    saveFs(prev => ({
+    saveFs((prev) => ({
       ...prev,
-      [file.path]: { type: 'file', text: file.text }
+      [file.path]: { type: "file", text: file.text },
     }));
   };
 
@@ -166,47 +177,51 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
     const handleKeyDown = (e) => {
       if (selected.size === 0) return;
 
-      if (e.key === 'Delete') {
+      if (e.key === "Delete") {
         e.preventDefault();
         deleteSelected();
       }
-      if (e.ctrlKey && e.key === 'c') {
+      if (e.ctrlKey && e.key === "c") {
         e.preventDefault();
         copyFiles();
       }
-      if (e.ctrlKey && e.key === 'x') {
+      if (e.ctrlKey && e.key === "x") {
         e.preventDefault();
         cutFiles();
       }
-      if (e.ctrlKey && e.key === 'v') {
+      if (e.ctrlKey && e.key === "v") {
         e.preventDefault();
         pasteFiles();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selected, clipboard, fs]);
 
   return (
-    <Window 
-      id={id} 
-      title="files" 
-      focused={focused} 
-      onFocus={onFocus} 
+    <Window
+      id={id}
+      title="files"
+      focused={focused}
+      onFocus={onFocus}
       onClose={onClose}
     >
-      <div 
+      <div
         className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
-        onContextMenu={e => {
+        onContextMenu={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           e.preventDefault();
-          setMenu({ x: e.clientX-rect.left, y: e.clientY-rect.top, kind: 'bg' });
+          setMenu({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            kind: "bg",
+          });
         }}
         onClick={() => setSelected(new Set())}
       >
         <div className="row gap-2 px-3 py-1.5 border-b border-gray-800 select-none">
-          <button 
+          <button
             onClick={navigateUp}
             disabled={cwd === root}
             className="text-gray-600 hover:text-gray-300 disabled:opacity-20 font-mono text-xs transition-colors"
@@ -220,9 +235,7 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
 
         {entries.length === 0 ? (
           <div className="flex-1 center">
-            <span className="mono-xs text-gray-700 tracking-widest">
-              empty
-            </span>
+            <span className="mono-xs text-gray-700 tracking-widest">empty</span>
           </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto hide-scroll">
@@ -236,37 +249,44 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
                 </tr>
               </thead>
               <tbody>
-                {entries.map(path => {
+                {entries.map((path) => {
                   const isDir = isDirectory(path);
                   const entry = fs[path];
                   const isSelected = selected.has(path);
 
                   return (
-                    <tr 
+                    <tr
                       key={path}
-                      onClick={e => handleRowClick(e, path)}
-                      onDoubleClick={e => handleRowDoubleClick(e, path)}
-                      onContextMenu={e => {
+                      onClick={(e) => handleRowClick(e, path)}
+                      onDoubleClick={(e) => handleRowDoubleClick(e, path)}
+                      onContextMenu={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         const rect = e.currentTarget.getBoundingClientRect();
                         if (!isSelected) setSelected(new Set([path]));
-                        setMenu({ x: e.clientX-rect.left, y: e.clientY-rect.top, kind: 'item' });
+                        setMenu({
+                          x: e.clientX - rect.left,
+                          y: e.clientY - rect.top,
+                          kind: "item",
+                        });
                       }}
-                      className={isSelected ? 'table-row-selected' : 'table-row'}
+                      className={
+                        isSelected ? "table-row-selected" : "table-row"
+                      }
                     >
                       <td className="px-3 py-1.5 text-gray-600">
                         {getIcon(entry)}
                       </td>
                       <td className="px-1 py-1.5 truncate max-w-[140px]">
-                        {getEntryName(path)}{isDir ? '/' : ''}
+                        {getEntryName(path)}
+                        {isDir ? "/" : ""}
                       </td>
                       <td className="px-1 py-1.5 text-gray-600">
-                        {isDir ? 'dir' : (entry.kind || 'text')}
+                        {isDir ? "dir" : entry.kind || "text"}
                       </td>
                       <td className="py-1.5 pr-2 text-right">
-                        <button 
-                          onClick={e => {
+                        <button
+                          onClick={(e) => {
                             e.stopPropagation();
                             setSelected(new Set([path]));
                             deleteSelected();
@@ -284,10 +304,7 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
           </div>
         )}
 
-        <FileViewer 
-          file={viewing} 
-          onClose={() => setViewing(null)} 
-        />
+        <FileViewer file={viewing} onClose={() => setViewing(null)} />
 
         <TextEditor
           file={editing}
@@ -295,9 +312,9 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
           onClose={() => setEditing(null)}
         />
 
-        {menu?.kind === 'bg' && (
-          <ContextMenu 
-            x={menu.x} 
+        {menu?.kind === "bg" && (
+          <ContextMenu
+            x={menu.x}
             y={menu.y}
             onNewFile={createNewFile}
             onNewFolder={createNewFolder}
@@ -306,20 +323,20 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
           />
         )}
 
-        {menu?.kind === 'item' && (
-          <div 
+        {menu?.kind === "item" && (
+          <div
             className="context-menu"
             style={{ left: menu.x, top: menu.y, minWidth: 140 }}
-            onMouseDown={e => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            {selected.size === 1 && fs[[...selected][0]]?.type === 'file' && (
-              <button 
+            {selected.size === 1 && fs[[...selected][0]]?.type === "file" && (
+              <button
                 onClick={() => {
                   const path = [...selected][0];
                   setEditing({
                     path,
                     name: getEntryName(path),
-                    text: fs[path].text || ''
+                    text: fs[path].text || "",
                   });
                   setMenu(null);
                 }}
@@ -329,21 +346,15 @@ export default function FileManager({ id, focused, onFocus, onClose, fs, setFs, 
               </button>
             )}
 
-            <button 
-              onClick={copyFiles}
-              className="context-menu-item"
-            >
+            <button onClick={copyFiles} className="context-menu-item">
               Copy
             </button>
 
-            <button 
-              onClick={cutFiles}
-              className="context-menu-item"
-            >
+            <button onClick={cutFiles} className="context-menu-item">
               Cut
             </button>
 
-            <button 
+            <button
               onClick={deleteSelected}
               className="context-menu-item-danger"
             >

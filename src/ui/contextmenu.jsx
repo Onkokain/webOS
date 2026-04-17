@@ -1,30 +1,37 @@
 import { useEffect } from "react";
 
-export default function ContextMenu({ x, y, onNewFile, onNewFolder, onPaste, onClose }) {
+export default function ContextMenu({
+  x,
+  y,
+  onNewFile,
+  onNewFolder,
+  onPaste,
+  onClose,
+}) {
   useEffect(() => {
     const handleMouseDown = () => {
       onClose();
     };
-    
-    window.addEventListener('mousedown', handleMouseDown);
-    return () => window.removeEventListener('mousedown', handleMouseDown);
+
+    window.addEventListener("mousedown", handleMouseDown);
+    return () => window.removeEventListener("mousedown", handleMouseDown);
   }, [onClose]);
-  
+
   const handleStopPropagation = (event) => {
     event.stopPropagation();
   };
-  
+
   return (
     <div
       className="fixed z-50 flex flex-col py-1 rounded-xl overflow-hidden"
       style={{
         left: x,
         top: y,
-        background: 'rgb(23, 22, 22)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-        minWidth: 140
+        background: "rgb(23, 22, 22)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+        minWidth: 140,
       }}
       onMouseDown={handleStopPropagation}
     >
