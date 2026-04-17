@@ -13,32 +13,32 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
 
     const resolvePath = (inputPath) => {
         const isHomeShortcut = !inputPath || inputPath === '~';
-        
+
         if (isHomeShortcut) {
             return userHomeDirectory;
         }
-        
+
         const isAbsolutePath = inputPath.startsWith('/');
-        
+
         if (isAbsolutePath) {
             return inputPath.endsWith('/') ? inputPath : inputPath + "/";
         }
-        
+
         const currentPathParts = currentWorkingDirectory.split('/').filter(Boolean);
         const inputPathParts = inputPath.split('/').filter(Boolean);
         const allPathParts = [...currentPathParts, ...inputPathParts];
         const resolvedPathParts = [];
-        
+
         for (const pathPart of allPathParts) {
             const isParentDirectory = pathPart === '..';
-            
+
             if (isParentDirectory) {
                 resolvedPathParts.pop();
             } else {
                 resolvedPathParts.push(pathPart);
             }
         }
-        
+
         return '/' + resolvedPathParts.join('/') + '/';
     }
 
@@ -66,6 +66,7 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
       '  hackertype         :   type like a hacker',
       '  heaven             :   easter egg',
       '  clear / cls        :   clear terminal',
+      'keybinds            :   view and edit keybinds',
         ]
 
         case 'cd': {
@@ -75,6 +76,37 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             setCurrentWorkingDirectory(target);
             return [];
         }
+case 'neofetch': {
+            return [
+                "",
+                "                                          ####",
+                "                                        ######",
+                "                                      ########",
+                "                                      ##########",
+                "                                     ############",
+                "                                    ##############",
+                "                                   ################",
+                "                                 ##################",
+                "                                 ####################",
+                "                               ######################",
+                "                               #########                   #########",
+                "                              ##########                  ##########",
+                "                             ###########                 ###########",
+                "                           ##########                             ##########",
+                "                          #######                                                      #######",
+                "                         ####                                                                               ####",
+                "                         ###                                                                                          ###",
+                "OS: Suprland* 0.1 (web-os)",
+                "Shell: suprsh",
+                "Terminal: web-terminal",
+                "Uptime: " + Math.floor(performance.now() / 3600000) + "h " + Math.floor((performance.now() % 3600000) / 60000) + "m " + Math.floor((performance.now() % 60000) / 1000) + "s",
+                "User: " + user,
+                "Hostname: " + HOST,
+
+            ];
+        }
+
+
 
         case 'ls': {
             const dir = commandArguments ? resolvePath(commandArguments) : currentWorkingDirectory;
@@ -203,7 +235,7 @@ const run = (command, user, currentWorkingDirectory, setCurrentWorkingDirectory,
             if (!commandArguments || commandArguments !== 'confirm')  return ['This will reset all user data. Type "reset confirm" to proceed.'];
             return ['__RESET__']
         }
-       
+
 
         case 'sudo': {
             return ['nice try but it ain\'t happening'];
@@ -233,7 +265,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
     const [input,setInput]=useState('');
     const [history,setHistory]=useState(BOOT(user));
 
-  
+
 
     const [cmdHistory,setCmdHistory]=useState(() => {
         const saved = localStorage.getItem(`suprland-cmd-history-${user}`);
@@ -264,11 +296,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
 
         if (out[0]==='__CLEAR__') {
             setHistory([BOOT(user)[0],BOOT(user)[1],BOOT(user)[2]]);
-            
+
         }
         else if (out[0]==='__HISTORY__') {
             setHistory((h) => [...h,
-                {k: 'prompt', 
+                {k: 'prompt',
                  t: `${user}@${HOST}:${shortCwd}$ ${cmd}`
                 },
                 ...cmdHistory.map((c,i) => ({k : 'out', t: ` ${cmdHistory.length-i} ${c}`}))
@@ -301,10 +333,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                         if (char.includes('\n')) {
                             return [...h, {k:'out',t: char.replace('\n','')}]
                         }
-                        if (last?.k==='out') 
+                        if (last?.k==='out')
                             return [...h.slice(0,-1), {k:'out',t: last.t+char}];
                         return [...h, {k:'out',t: char}]
-                        
+
                     })
                     scrollBottom();
 
@@ -312,8 +344,8 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 hackerRef.current=handler
                 document.addEventListener('keydown', handler);
             })
-                
-            
+
+
         }
 
 
@@ -374,8 +406,8 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
 
     return (
         <>
-            <Window 
-            id={id} 
+            <Window
+            id={id}
             title={`${user}@${HOST}`}
              focused={focused}
               onFocus={onFocus}
@@ -385,7 +417,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 style={{fontSize}}
                 onClick={() => inputRef.current?.focus()}>
                 {history.map((l, i) => (
-<div key={i} style={{color: settings?.textColor || 'white'}}>{l.t}</div>
+            <div className="whitespace-pre" key={i} style={{color: settings?.textColor || 'white'}}>{l.t}</div>
 
 
 
@@ -393,7 +425,7 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 ))}
                 <div ref={bottomRef} />
             </div>
-            <form onSubmit={submit} className="flex-shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
+            <form onSubmit={submit} className="shrink-0 row gap-2 px-3 py-2 border-t border-gray-800">
                 <span className="font-mono whitespace-nowrap "
                 style={{fontSize}}
              >
@@ -404,11 +436,11 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                 </span>
                 <input ref={(el) => { inputRef.current = el; if (focused) el?.focus(); }}
                 value={input}
-                 onChange={(e) => setInput(e.target.value)} 
+                 onChange={(e) => setInput(e.target.value)}
                  onKeyDown={onKeyDown}
                  readOnly={hackerActive}
                 className="flex-1 bg-transparent outline-none text-gray-200 font-mono min-w-0 "
-                spellCheck="false" autoComplete="off" 
+                spellCheck="false" autoComplete="off"
                 style={{fontSize}}
                 />
             </form>
@@ -419,10 +451,10 @@ export default function Cli({id,focused,onFocus,onClose,user,fs,setFs,onOpenApp,
                     setKeybinds={setKeybinds}
                     onClose={() => setIsEditingKeybinds(false)}
                 />
-                
-                
+
+
             )}
-        
+
         </>
     )
 }

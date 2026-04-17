@@ -45,13 +45,13 @@ TERMINAL COMMANDS
   history            :   show command history
   cal                :   print current month calendar
   env                :   print environment variables
-  color <color>      :   change text color 
+  color <color>      :   change text color
   browser <url>      :   open url in browser
   hackertype         :   type like a hacker
   heaven             :   easter egg
   clear / cls        :   clear terminal output
   keybinds           :  edit default keybinds
-  
+
 
 NOTEPAD
   Ctrl + s        :   save note to desktop
